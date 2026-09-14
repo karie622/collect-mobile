@@ -1,4 +1,17 @@
-# 把采集页放到 GitHub Pages（无需备案，手机可直开）
+# 手机采集页（GitHub Pages 托管）
+
+## 线上地址
+
+```
+https://karie622.github.io/collect-mobile/
+```
+
+仓库：`karie622/collect-mobile`（公开）。后端 API：`https://1488221122-fm448vw4ra.ap-beijing.tencentscf.com`
+
+已通过 GitHub API 完成部署（建库 → 传 `index.html` / `.nojekyll` → 开启 Pages），**无需再手动操作**。
+下面记录的是原理和以后要改时的步骤。
+
+---
 
 ## 一、为什么不能直接打开 `*.tencentscf.com`
 
@@ -17,27 +30,22 @@ C:\Users\循道\WorkBuddy\2026-09-04-18-55-59\pages-github\index.html
 
 单文件、零依赖，9KB，已内置后端地址。
 
-## 三、三步搞定
+## 三、以后要改页面时怎么办
 
-### 1. 传到 GitHub
+本地源文件改完后，同步到仓库即可（任选一种）：
 
-打开目标仓库（没有就新建一个，比如 `shoucang`）→ **Add file → Upload files** →
-把 `index.html` 拖进去 → Commit。
+```bash
+# A. 命令行：覆盖后推送
+cp "C:/Users/循道/WorkBuddy/2026-09-04-18-55-59/采集-手机版.html" pages-github/index.html
+git push          # 若已 clone 本仓库
 
-### 2. 开 Pages
-
-仓库 **Settings → Pages → Source** 选 `main` 分支、根目录 `/` → Save。
-等 1~2 分钟，地址形如：
-
-```
-https://karie622.github.io/shoucang/
+# B. 网页：仓库 → index.html → 铅笔图标 → 粘贴新内容 → Commit
 ```
 
-### 3. 手机打开 + 加到桌面
+GitHub Pages 会在十几秒到一分钟内自动更新，不用重新开启。
 
-用手机浏览器打开上面这个地址 → 菜单 → **添加到主屏幕**。
-
-顶部会显示 **● 已连接，将真实写入内容数据库**，就说明通了。
+> 注意：`pages-github/index.html` 是从根目录 `采集-手机版.html` **复制**出来的，
+> 改完源文件记得重新拷贝一次，两边不会自动同步。
 
 ## 四、后端地址是怎么决定的
 
@@ -51,7 +59,7 @@ https://karie622.github.io/shoucang/
 需要临时改后端时，加参数覆盖一次即可（会存到浏览器本地）：
 
 ```
-https://karie622.github.io/shoucang/?api=https://别的后端地址
+https://karie622.github.io/collect-mobile/?api=https://别的后端地址
 ```
 
 ## 五、已验证
@@ -60,9 +68,13 @@ https://karie622.github.io/shoucang/?api=https://别的后端地址
 |---|---|
 | JS 语法 | `node --check` 通过 |
 | 地址解析（github.io / file:// / localhost / tencentscf.com / `?api=` 覆盖） | 5 种场景全部符合预期 |
-| CORS 预检 `OPTIONS /api/auto-ingest` | 204，`Access-Control-Allow-Origin: *` |
-| 跨域 `POST /api/auto-ingest` | 200，真实落库 |
-| 跨域 `POST /api/fetch-url` | 200，抓到「Python 教程」966 字 |
+| 步骤 | 结果 |
+|---|---|
+| 建库 `karie622/collect-mobile` | 201 |
+| 传 `index.html` / `.nojekyll` | 201 / 201 |
+| 开启 Pages（`main` + `/`） | 201，`html_url` = `https://karie622.github.io/collect-mobile/` |
+| 生效耗时 | **约 20 秒** |
+| 线上返回 | 200，`Content-Type: text/html; charset=utf-8`，**无 `Content-Disposition`** |
 
 测试数据已清理，内容库 `classified` 保持 **41**。
 
