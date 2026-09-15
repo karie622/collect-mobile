@@ -35,6 +35,7 @@ textarea{min-height:150px;resize:vertical;line-height:1.6}
 .msg{padding:11px 13px;border-radius:10px;font-size:13px;margin-top:10px;display:none;line-height:1.7}
 .msg.ok{background:#e8f5ee;color:#1f7a4d}
 .msg.err{background:#fdecea;color:#b23b2e}
+.msg.wait{background:#fff4e5;color:#a5621a}
 .msg code{background:rgba(0,0,0,.06);padding:1px 6px;border-radius:5px;font-size:12px}
 .hintbox{font-size:12px;color:var(--sub);line-height:1.8;background:var(--panel);
   border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px}
@@ -57,7 +58,7 @@ textarea{min-height:150px;resize:vertical;line-height:1.6}
 <body>
 <div class="wrap">
   <h1>☁️ 云端素材采集</h1>
-  <div class="sub">手机任何网络都能用，不需要电脑开机、不需要梯子。<br>甩链接 → 自动抓正文 → AI 分类 → 存进你的云端存储（Railway）。</div>
+  <div class="sub">手机任何网络都能用，不需要电脑开机、不需要梯子。<br>甩链接 → 自动抓正文 → AI 分类 → 存进你的云端存储（腾讯云）。</div>
 
   <div style="margin-bottom:10px"><a href="https://karie622.github.io/mind-watch/" target="_blank" rel="noopener" style="font-size:13px;color:var(--accent);text-decoration:none;font-weight:600">🧭 思维监控（记录念头 / 循环提醒）→</a></div>
 
@@ -205,8 +206,28 @@ async function submitUrl(){
   hideMsg();
   var url=$('u-url').value.trim();
   if(!url){showMsg('err','请先粘贴文章链接。');return;}
-  await post({url:url,category_hint:$('u-hint').value},'抓取并入库完成');
-  $('u-url').value='';
+  if(BUSY){showMsg('err','正在提交中，请勿重复点击。');return;}
+  setBusy(true);
+  showMsg('wait','正在抓取正文并入库…（微信文章约需 10~40 秒，请勿关闭页面）');
+  try{
+    var r=await fetchTO(base()+'/api/fetch-url',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({url:url,category_hint:$('u-hint').value}),to:75000});
+    var j=await r.json();
+    if(!r.ok||!j.ok){
+      showMsg('err','✗ '+(j.error||('请求失败 '+r.status))
+        +(j.warn?'<br>⚠ '+j.warn:'')
+        +'<br>💡 抓不到时改用「✎ 粘贴正文」手动录入最稳。');
+      return;
+    }
+    showMsg('ok','✓ 抓取并入库完成： <b>'+esc(j.category)+'</b> '+(j.ai_refined?'（AI 精修）':'（规则粗分）')
+      +'<br>标题：'+esc(j.title||'')+'<br>正文长度：'+(j.text_len||0)+' 字'
+      +(j.warn?'<br>⚠ '+j.warn:''));
+    $('u-url').value='';
+    loadRecent();
+  }catch(e){
+    var bad=e&&e.name==='AbortError';
+    showMsg('err','✗ '+(bad?'抓取超时（文章太长或网络慢），重试一次或改用「✎ 粘贴正文」。':'网络错误：'+e.message));
+  }finally{setBusy(false);}
 }
 async function submitPaste(){
   hideMsg();
