@@ -45,6 +45,11 @@
       <div class="t">认知内核沉淀</div>
       <div class="d">提炼世界观 / 价值观引擎</div>
     </a>
+    <a class="card" id="wr-card" href="file:///D:/BaiduSyncdisk/1.工作台/微信读书工作台/微信读书-手机版-粉色完整版.html" onclick="return wrGo(event)">
+      <div class="ico">📖</div>
+      <div class="t">微信读书</div>
+      <div class="d">本地单文件版 · 点卡片复制路径，新标签页粘贴到地址栏回车打开（建议收藏；数据内置，完全离线）</div>
+    </a>
     <a class="card ext" href="https://karie622.github.io/mind-watch/" target="_blank" rel="noopener">
       <div class="ico">🧭</div>
       <div class="t">思维监控</div>
@@ -55,12 +60,35 @@
       <div class="t">错误思维</div>
       <div class="d">记录反复出现的错误思维，AI 对照认知内核生成正确观念与练习，一键落盘云端</div>
     </a>
-    <a class="card disabled" href="#">
-      <div class="ico">📖</div>
-      <div class="t">微信读书</div>
-      <div class="d">手机单文件版 · 在家电脑把「微信读书-手机版.html」传到手机直接打开（数据内置，完全离线）</div>
-    </a>
   </div>
+
+  <div id="toast" style="display:none;position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#222;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;max-width:86vw;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.25)"></div>
+  <script>
+    var WR_PATH = 'D:\\BaiduSyncdisk\\1.工作台\\微信读书工作台\\微信读书-手机版-粉色完整版.html';
+    var _toastTimer = null;
+    function toast(msg){
+      var el = document.getElementById('toast');
+      el.textContent = msg; el.style.display = 'block';
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(function(){ el.style.display = 'none'; }, 3600);
+    }
+    function wrGo(e){
+      e.preventDefault();
+      if (location.protocol === 'file:') { location.href = WR_PATH; return false; }
+      var done = false;
+      try { navigator.clipboard.writeText(WR_PATH).then(function(){ toast('✅ 路径已复制：新开标签页，粘贴到地址栏回车即可打开'); }, function(){ fallback(); }); done = true; }
+      catch(_) {}
+      if (!done) fallback();
+      function fallback(){
+        var ta = document.createElement('textarea');
+        ta.value = WR_PATH; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); toast('✅ 路径已复制：新开标签页，粘贴到地址栏回车即可打开'); }
+        catch(_){ toast('请手动复制路径：' + WR_PATH); }
+        document.body.removeChild(ta);
+      }
+      return false;
+    }
+  </script>
 
   <div class="foot">所有数据由你的云端后端（Tencent SCF）读写 · GitHub Pages 仅托管前端</div>
 </body>
