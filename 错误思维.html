@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>错误思维修正</title>
+<style>
+:root{--bg:#f5f1ea;--panel:#fff;--ink:#3d3d3d;--muted:#8c8c8c;--line:#ebe5dd;
+  --primary:#c75c48;--primary-soft:#f9eae7;--green:#5a9a6d;--green-soft:#e8f4ec;--amber:#c9923d;--amber-soft:#faf3e3}
+*{box-sizing:border-box}
+body{margin:0;padding:18px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink)}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:19px;margin:0 0 4px}
+a.home{font-size:12.5px;color:var(--muted);text-decoration:none;margin-left:8px}
+a.home:hover{text-decoration:underline}
+.sub{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.7}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat{flex:1;min-width:110px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stat .num{font-size:24px;font-weight:700}
+.stat .lab{font-size:12px;color:var(--muted);margin-top:2px}
+textarea,input[type=text],input[type=password]{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;
+  font-size:14px;font-family:inherit;background:#fff;color:var(--ink);resize:vertical;outline:none}
+textarea:focus,input:focus{border-color:var(--amber)}
+textarea{min-height:64px}
+.row{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+button{padding:9px 22px;border:0;border-radius:9px;background:var(--amber);color:#fff;font-size:14px;
+  cursor:pointer;font-family:inherit}
+button:hover{filter:brightness(1.06)}
+button:disabled{opacity:.5;cursor:default}
+button.link{background:#eee8df;color:var(--ink);padding:6px 14px;font-size:12.5px}
+.err{background:var(--primary-soft);color:var(--primary);border-radius:9px;padding:9px 12px;
+  font-size:12.5px;margin-top:10px;display:none}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{padding:12px 4px;border-bottom:1px solid var(--line)}
+.tl li:last-child{border-bottom:0}
+.t-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.t-time{font-size:11.5px;color:var(--muted)}
+.t-tag{font-size:11.5px;padding:1px 9px;border-radius:20px;background:#eee8df;color:#7a6f5f}
+.t-tag.bt{background:var(--amber);color:#fff}
+.t-del{margin-left:auto;font-size:11.5px;color:var(--muted);cursor:pointer;padding:1px 8px;border-radius:20px}
+.t-del:hover{background:var(--primary-soft);color:var(--primary)}
+details.setup{margin-bottom:14px}
+details.setup summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0;list-style:none}
+details.setup summary::-webkit-details-marker{display:none}
+details.setup summary:before{content:"⚙ "}
+.set-row{margin-top:12px}
+.set-row label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:5px;font-weight:600}
+.hint{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:5px}
+.sync-status{font-size:12px;margin-top:8px;color:var(--muted)}
+.sync-status.ok{color:var(--green)}
+.sync-status.err{color:var(--primary)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.bug-raw{font-size:13.5px;line-height:1.75}
+.bug-scene{margin-top:4px;font-size:12px;color:var(--muted)}
+.bug-cor{margin-top:8px;background:var(--green-soft);border:1px solid #c4ddce;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.8}
+.bug-cor .lb{font-weight:700;color:var(--green)}
+.bug-basis{margin-top:6px;font-size:12px;color:#5c6b5f;background:rgba(255,255,255,.65);border-left:3px solid var(--green);border-radius:6px;padding:6px 10px;line-height:1.7}
+.bug-empty-cor{margin-top:8px;font-size:12.5px;color:var(--muted);background:#f7f3ec;border-radius:10px;padding:9px 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🩹 错误思维修正<a class="home" href="index.html">← 返回首页</a></h1>
+  <div class="sub">记录反复出现的错误思维，AI 对照你的<b>认知内核</b>生成正确观念、内核依据与事中练习。<br>
+  数据存在浏览器本机，可同步到你自己的私有 Gist 多设备使用；「同步到工作台」一键写入云端内容库（腾讯云）。</div>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="st-bug" style="color:var(--green)">–</div><div class="lab">本机错误思维</div></div>
+    <div class="stat"><div class="num" id="st-cloud" style="color:var(--amber)">–</div><div class="lab">云端已落盘</div></div>
+  </div>
+
+  <div class="card" id="kernel-card">
+    <div class="row" style="margin-top:0">
+      <div style="font-size:14px;font-weight:600">🧠 认知内核 <span style="font-size:12px;font-weight:400;color:var(--muted)">对照修正的标尺 · 可手动载入后直接修改</span></div>
+      <button class="link" id="kernel-toggle" onclick="toggleSec('colKernel')">收起 ▲</button>
+    </div>
+    <div id="kernel-body" style="margin-top:8px">
+      <textarea id="kernel-edit" placeholder="这里放你的认知内核（kernel.md 内容）。点「📂 从文件载入」导入，或直接粘贴；改完点「💾 保存内核」。" style="min-height:150px;font-size:12.5px"></textarea>
+      <div class="bar">
+        <button class="link" onclick="loadCloudKernel()">☁️ 从云端载入</button>
+        <button class="link" onclick="pickKernelFile()">📂 从文件载入</button>
+        <button onclick="saveKernel()">💾 保存内核</button>
+        <button class="link" onclick="clearKernel()">↺ 清空</button>
+        <span id="kernel-info" style="font-size:12px;color:var(--muted)">未载入</span>
+      </div>
+      <input type="file" id="kernel-file" accept=".md,.txt,.json" style="display:none">
+    </div>
+  </div>
+
+  <div class="card">
+    <textarea id="b-input" placeholder="写下那个反复出现的错误思维原话，例如：他没回我消息，肯定是讨厌我了"></textarea>
+    <input type="text" id="b-scene" style="margin-top:8px" placeholder="什么场景/触发？（可选，例如：等回复时）">
+    <div class="row">
+      <button id="b-save" onclick="saveBug()">记 录</button>
+      <button class="link" onclick="loadPreset()">📥 载入 30 条预设清单</button>
+      <button class="link" id="bug-toggle" onclick="toggleSec('colBugs')">收起 ▲</button>
+      <span style="font-size:12px;color:var(--muted)">记录后点每条的「⚡ 对照内核修正」生成正确观念（先在上方🧠载入认知内核，并在设置里选 AI 服务商、填对应的 API Key）</span>
+    </div>
+    <div class="err" id="b-err"></div>
+    <ul class="tl" id="bug-list" style="margin-top:6px"></ul>
+  </div>
+
+  <details class="setup" id="setup">
+    <summary>设置（密钥 / 认知内核 / 同步）</summary>
+    <div class="card" style="margin-top:8px">
+      <div class="set-row">
+        <label>AI 服务商（选一个用于「对照内核修正」）</label>
+        <select id="s-provider" onchange="onProviderChange()">
+          <option value="deepseek">DeepSeek（api.deepseek.com）</option>
+          <option value="ali">阿里云百炼 · 通义千问（DashScope）</option>
+        </select>
+      </div>
+      <div class="set-row" id="row-key-deepseek">
+        <label>DeepSeek API Key</label>
+        <input type="password" id="s-key" placeholder="sk-…（只存在这台设备的浏览器，不进代码、不上传）">
+        <div class="hint">没有 key 也能记录，只是不做 AI 分析。可在 platform.deepseek.com 申请。<br>认知内核在上方「🧠 认知内核」卡片里手动载入与编辑。</div>
+      </div>
+      <div class="set-row" id="row-key-ali" style="display:none">
+        <label>阿里云百炼 API Key（DashScope）</label>
+        <input type="password" id="s-key-ali" placeholder="sk-…（阿里云百炼控制台获取，数据发往 dashscope.aliyuncs.com）">
+        <div class="hint">阿里云「百炼」控制台创建 API Key（sk- 开头）。通义千问 qwen-plus 等模型，国内节点、按量计费、便宜。</div>
+      </div>
+      <div class="set-row">
+        <label>模型名（可选，留空用默认）</label>
+        <input type="text" id="s-model" placeholder="阿里云默认 qwen-plus；DeepSeek 默认 deepseek-v4-flash">
+        <div class="hint">可填 qwen-max / qwen-turbo / qwen3-plus 等；DeepSeek 可填 deepseek-v4-flash / deepseek-v4-pro。</div>
+      </div>
+      <div class="set-row">
+        <label>GitHub Gist 令牌（用于多设备同步）</label>
+        <input type="password" id="s-token" placeholder="ghp_…（需勾选 gist 权限）">
+        <div class="hint">数据存在<b>你自己的私有 Gist</b> 里，别人看不到。不填则只存在本机。</div>
+        <div class="bar">
+          <button class="link" onclick="saveSetup()">保存令牌</button>
+          <button class="link" onclick="syncNow()">立即同步</button>
+          <label class="chk" style="font-size:12.5px"><input type="checkbox" id="s-auto"> 记录后自动同步</label>
+        </div>
+      </div>
+      <div class="sync-status" id="syncStatus"></div>
+      <div class="set-row">
+        <label>数据 export / import</label>
+        <div class="bar">
+          <button class="link" onclick="exportJson()">导出 JSON 备份</button>
+          <button class="link" onclick="pickImport()">导入 JSON</button>
+          <button class="link" onclick="syncToWorkbench()">⬆ 同步到工作台（认知迭代用）</button>
+        </div>
+        <input type="file" id="s-import-file" accept=".json" style="display:none">
+      </div>
+    </div>
+  </details>
+</div>
+<script>
+async function pullCloudStat(){
+  try{
+    const r = await fetch(api("/api/kernel/mind_consumed"), {cache:"no-store"});
+    if(!r.ok) return;
+    const d = await r.json();
+    const el = document.getElementById("st-cloud");
+    if(el) el.textContent = d.total_error_thoughts || 0;
+  }catch(e){}
+}
+/* ---------- 云端 API 基址（与采集/干货/内核页同一套逻辑） ---------- */
+const SCF = "https://1488221122-fm448vw4ra.ap-beijing.tencentscf.com";
+function apiBase(){
+  try{
+    const q = new URLSearchParams(location.search).get("api");
+    if(q){ localStorage.setItem("cdb_api", q); return q.replace(/\/+$/, ""); }
+    const saved = localStorage.getItem("cdb_api");
+    if(saved) return saved.replace(/\/+$/, "");
+  }catch(e){}
+  const h = location.hostname;
+  if(h === "localhost" || h === "127.0.0.1" || h.indexOf("tencentscf") >= 0) return "";
+  return SCF;
+}
+function api(p){ return apiBase() + p; }
+/* 云端认知内核：自动载入 + 手动刷新 */
+async function loadCloudKernel(silent){
+  try{
+    const r = await fetch(api("/api/kernel"), {cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const d = await r.json();
+    if(!d.exists || !d.raw) throw new Error("云端还没有内核");
+    $("kernel-edit").value = d.raw;
+    saveKernel();
+    if(!silent) status("✓ 已从云端载入认知内核（"+d.raw.length+" 字）", "ok");
+    return true;
+  }catch(e){
+    if(!silent) status("云端载入失败："+e.message, "err");
+    return false;
+  }
+}
+const PRESET_BUGS=[{"id":"b20260911_01","ts":"2026-09-11 23:01:00","updatedAt":"2026-09-11 23:01:00","wrong":"受到金钱的限制","scene":"","name":"金钱牢笼","correction":{"name":"金钱牢笼","correction":"金钱是游戏规则里的一种资源参数，不是我的边界。真正卡住我的是\"没钱就不能动\"这条程序。出厂设置（起点资源）改不了，软设置（技能、注意力、今天的行动）能改。把\"我没钱所以做不了\"换成\"用现在手里这点东西，我今天能做的最小一步是什么\"。","basis":"人生观：宿命是出厂设置不可改，软设置可重塑；价值观：反对以金钱为唯一标准物化人","practice":"念头冒出来就改写句子：我现在有___，下一步做___，并当场干一件不需要钱的事（写三百字、发一条、学一节）。"}},{"id":"b20260911_02","ts":"2026-09-11 23:02:00","updatedAt":"2026-09-11 23:02:00","wrong":"环境在限制自己","scene":"","name":"环境决定论","correction":{"name":"环境决定论","correction":"环境是投影帷幕的一部分，它限制的是路径，不限制我此刻的注意力和解释方式。帷幕我选不了，但同一个帷幕下程序不同，输出就不同。我改不了场景，改得了软设置。","basis":"世界观：现实是巨大的投影帷幕，每个人在自己的单机游戏里当主角；人生观：软设置可重塑","practice":"把环境写成三条纯事实（不带评价），再写出其中我能控制的一件事，今天做掉。"}},{"id":"b20260911_03","ts":"2026-09-11 23:03:00","updatedAt":"2026-09-11 23:03:00","wrong":"社会是金字塔结构","scene":"","name":"结构宿命论","correction":{"name":"结构宿命论","correction":"层级结构是真的，它是外部硬条件；但\"我在下面所以没路\"是我自己加的第二层解释。看清结构是为了选路径，不是为了给自己判无期。结构限制我的位置，不限制我的位移。","basis":"张力共存：宿命的硬边界不可改 vs. 软设置可重塑；认知方式：多维度归因","practice":"每次想到金字塔，补一句\"结构是真的，位置不是终身的\"，然后写下一条位移动作：学什么、认识谁、做出什么。"}},{"id":"b20260911_04","ts":"2026-09-11 23:04:00","updatedAt":"2026-09-11 23:04:00","wrong":"没有力气跟别人竞争","scene":"","name":"竞争耗竭","correction":{"name":"竞争耗竭","correction":"\"力气\"不是固定电量，是被后台程序漏掉的。竞争框架本身就是被植入的：排名制造匮乏感。我不必在别人的赛道上比，我在自己选的单机游戏里升级，定力能恢复体力。","basis":"核心观点3：教育通过排名植入挫败感、抑制潜力；核心观点8：定力是事中能力","practice":"察觉\"没力气\"当天，主动停比较二十四小时：不刷同行数据、不看别人的成果，只做自己进度条上的一件事。"}},{"id":"b20260911_05","ts":"2026-09-11 23:05:00","updatedAt":"2026-09-11 23:05:00","wrong":"做什么也成功不了","scene":"","name":"全盘否定","correction":{"name":"全盘否定","correction":"这是程序拿一次失败覆盖了所有可能性。现实给我的反馈是\"这个方法在这个条件下不成\"，不是\"我不成\"。把被评价的对象从我，换成方法。","basis":"核心观点1：痛苦源于想法与现实不符；认知方式：识别植入观念并自我修正","practice":"写下最近三次\"没成\"，逐条改成\"方法A在条件B下失效，下次改___\"，把\"我不行\"三个字从句子里删干净。"}},{"id":"b20260911_06","ts":"2026-09-11 23:06:00","updatedAt":"2026-09-11 23:06:00","wrong":"自己很虚弱","scene":"","name":"虚弱认同","correction":{"name":"虚弱认同","correction":"\"虚弱\"是我给一个暂时状态起的名字，不是我的身份。身体和能量本来就有波动，波动不等于虚弱。载具需要保养，不需要判决书。","basis":"张力共存：识神是混乱的根源 vs. 识神可以被训练成好司机；表达基调：第一人称具身体验","practice":"出现\"我虚弱\"时改成报指标：睡了几小时、吃了什么、走了多少步，然后只调其中一项，不评价。"}},{"id":"b20260911_07","ts":"2026-09-11 23:07:00","updatedAt":"2026-09-11 23:07:00","wrong":"自己需要藏起来","scene":"","name":"隐匿即安全","correction":{"name":"隐匿即安全","correction":"藏是短期防御程序，长期跑下去会不断强化\"外面很危险\"这个设定。真正的安全感来自定力，不是消失。我能控制的是暴露的边界，不是把自己从场上撤掉。","basis":"核心观点6：情绪是外部程序，定力可切断共振；价值观：清醒、独立、自我负责","practice":"本周做一次可控暴露：发出一条真实想法，只暴露百分之十。事后记录实际受到的伤害——通常为零。"}},{"id":"b20260911_08","ts":"2026-09-11 23:08:00","updatedAt":"2026-09-11 23:08:00","wrong":"自己无法应对危机","scene":"","name":"危机无能预设","correction":{"name":"危机无能预设","correction":"还没发生的危机被提前演算成灾难，这是死亡焦虑在预支未来。能力是在事中长出来的，不是事先攒够的。我只需要对\"此刻的下一步\"负责。","basis":"核心观点7：负面情绪源于死亡焦虑；核心观点5：只有当下，未来是幻想","practice":"危机念头一来就问：这件事的下一步具体动作是什么？写下那个动作就停，绝不演算第三步以后。"}},{"id":"b20260911_09","ts":"2026-09-11 23:09:00","updatedAt":"2026-09-11 23:09:00","wrong":"没有男人会喜欢我","scene":"","name":"被爱即价值","correction":{"name":"被爱即价值","correction":"把\"被喜欢\"当成人身价值的判据，是一条被写进去的公式。被爱不是幸福的来源，我不需要通过被谁选中来证明自己存在。我在宁静清晰状态下的样子，才是能给出爱的前提。","basis":"认知方式反常识：被爱不是幸福来源；核心观点9：真正的爱只在宁静清晰状态下发生","practice":"念头出现就反问：如果永远不被喜欢，我今天仍然要做的是什么？然后把答案做出来。"}},{"id":"b20260911_10","ts":"2026-09-11 23:10:00","updatedAt":"2026-09-11 23:10:00","wrong":"男人不值得信任","scene":"","name":"群体标签化","correction":{"name":"群体标签化","correction":"用一个类别盖住所有个体，是集体意识最省事的写法。真正的工具是识别具体的人：用精神掠夺者分类去判断，而不是用性别去判决。我要保留的是边界，不是关闭判断。","basis":"外部素材处理规则：精神掠夺者分类工具；人际筛选：识别对方即识别自己","practice":"遇到具体的人，先列三条可观察到的行为再下结论，禁用\"都、从来、全都\"这类词。"}},{"id":"b20260911_11","ts":"2026-09-11 23:11:00","updatedAt":"2026-09-11 23:11:00","wrong":"认为载具是\"我\"","scene":"","name":"载具认同","correction":{"name":"载具认同","correction":"身体、情绪、角色是载具，是被驾驶的东西，不是驾驶员。把载具的损伤当成我的损伤，是认错了主人。驾驶员可以训练，载具可以保养，两件事分开做。","basis":"张力共存：识神可以被训练成好司机；世界观：单机游戏中的主角","practice":"情绪或病痛来袭时改用第三人称描述：\"这个载具现在心率快、肩膀紧\"，然后问驾驶员要做什么。"}},{"id":"b20260911_12","ts":"2026-09-11 23:12:00","updatedAt":"2026-09-11 23:12:00","wrong":"认为活着很累","scene":"","name":"生存即消耗","correction":{"name":"生存即消耗","correction":"真正累的是一直在后台跑的程序：比较、期待、预演。把后台清掉，活着本身不费力。三万天不是债务，是可玩时长。","basis":"人生观：人生约三万天，不应被虚假期待和匮乏感束缚；核心观点4：期待本质是匮乏","practice":"每天关掉一个后台：今天不比较，或不预演明天的对话。晚上记录疲惫值的变化。"}},{"id":"b20260911_13","ts":"2026-09-11 23:13:00","updatedAt":"2026-09-11 23:13:00","wrong":"认为人类充满算计","scene":"","name":"敌意归因","correction":{"name":"敌意归因","correction":"人有利己的本能运算，但\"算计\"是我额外加的敌意解释。把本能当恶意，会让我长期处于戒备状态，最先耗掉的是我的定力。看清机制，不等于宣判动机。","basis":"高频主题：人性／兽性；认知方式：从认知层、编程层、本能层、能量层多维度归因","practice":"对一次让你不舒服的互动，写出三种非恶意解释（笨拙、自顾不暇、习惯使然），再决定怎么回应。"}},{"id":"b20260911_14","ts":"2026-09-11 23:14:00","updatedAt":"2026-09-11 23:14:00","wrong":"认为权威不可信","scene":"","name":"权威全否","correction":{"name":"权威全否","correction":"权威是信息源，不是真理源，也不是敌人。全盘相信和全盘否定，都是把判断权交出去了。我的规矩是：抽出它的逻辑链和隐性前提，同时写一份攻击报告——如果它成立，我的哪条观点会被挑战。","basis":"外部素材处理规则：优先提取核心逻辑链与隐性前提，必须输出攻击报告","practice":"听到权威观点就写两句：\"如果它对，我错在哪\"和\"它用了什么前提\"。"}},{"id":"b20260911_15","ts":"2026-09-11 23:15:00","updatedAt":"2026-09-11 23:15:00","wrong":"认为劳动没有价值","scene":"","name":"劳动虚无","correction":{"name":"劳动虚无","correction":"劳动的价值不由市场当期的报价来结算。市场结算的是可替代性，而我每做一件事都在积累不可替代的软设置。\"没有回报\"和\"没有价值\"是两回事。","basis":"人生观：通过觉察修正认知程序；价值观：反对以金钱为唯一评价标准","practice":"给今天的劳动写一条非金钱收益：练熟了什么、验证了什么、排除了什么。"}},{"id":"b20260911_16","ts":"2026-09-11 23:16:00","updatedAt":"2026-09-11 23:16:00","wrong":"认为自己想的就是事实","scene":"","name":"想法即事实","correction":{"name":"想法即事实","correction":"想法是被编程出来的输出，不是现实的读数。痛苦恰恰来自把想法当成事实之后，和现实产生的落差。我唯一能确定的是\"我在想\"，不是\"我想的是真的\"。","basis":"核心观点1：痛苦源于想法与现实不符；核心观点2：大脑像碳基AI，可被编程也可自我编程","practice":"给每个强烈念头贴一句标签\"这是我的程序在说话\"，然后硬找一个反面证据。"}},{"id":"b20260911_17","ts":"2026-09-11 23:17:00","updatedAt":"2026-09-11 23:17:00","wrong":"不敢承担后果","scene":"","name":"后果恐惧","correction":{"name":"后果恐惧","correction":"不选择本身也是一种选择，而且它的后果通常更贵。承担不是保证结果变好，是把主权拿回来。软设置的重塑，只发生在承担之后。","basis":"价值观：清醒、独立、自我负责；人生观：摆脱外界控制，活出清醒自主","practice":"对一直拖着的决定，写下\"最坏可承受后果\"和\"不做的代价\"，选代价小的那个，当天执行。"}},{"id":"b20260911_18","ts":"2026-09-11 23:18:00","updatedAt":"2026-09-11 23:18:00","wrong":"害怕冲突","scene":"","name":"冲突回避","correction":{"name":"冲突回避","correction":"冲突是边界被触碰的信号，不是关系终结的预告。回避冲突换来的，是边界继续被人踩。我可以在不失控的前提下把分歧说出来。","basis":"核心观点9：情绪失控的纠缠不是爱；核心观点8：定力是事中能力；价值观：拒绝盲从","practice":"用固定句式做低强度冲突练习：\"这件事我的看法是__，我不打算改。\"只说一次，不解释三遍。"}},{"id":"b20260911_19","ts":"2026-09-11 23:19:00","updatedAt":"2026-09-11 23:19:00","wrong":"不敢对自己负责","scene":"","name":"责任外置","correction":{"name":"责任外置","correction":"把决定权交出去的同时，我把结果的解释权也一起交了。自我负责不等于揽下全部过错，只是承认\"下一步由我选\"。","basis":"人生观：清醒自主；张力共存：外部确实存在精神掠夺 vs. 解法全在自己身上","practice":"今天至少一次，把\"我没办法、是他们逼的\"改写成\"我选择__，因为___\"。"}},{"id":"b20260911_20","ts":"2026-09-11 23:20:00","updatedAt":"2026-09-11 23:20:00","wrong":"她在伤害\"我\"","scene":"","name":"伤害实体化","correction":{"name":"伤害实体化","correction":"被触动的往往是被编程出来的那个\"我\"——一个需要被维护的形象。先分清伤害落在哪一层：是载具受损、边界被越，还是形象被碰。分清之后，动作就不是反击，而是设边界。","basis":"核心观点6：情绪是自动运行的外部程序；精神掠夺者分类；人际筛选：识别对方即识别自己","practice":"写清三件事：具体行为是什么、我的哪条规则被越过、我要加什么边界动作。不做人格审判。"}},{"id":"b20260911_21","ts":"2026-09-11 23:21:00","updatedAt":"2026-09-11 23:21:00","wrong":"没人看得起\"我\"","scene":"","name":"认可依赖","correction":{"name":"认可依赖","correction":"需要被人看得起，说明评分表放在别人手里——这和我反对的\"用外部评价物化人\"是同一条程序。把评分权收回来：我的标尺是内核，不是观众。","basis":"价值观：反对以外部评价为唯一标准；核心观点4：期待即匮乏；高频主题：认可、投射","practice":"列出三件没人喝彩、但我自己认账做到的事，作为新的评分表。"}},{"id":"b20260911_22","ts":"2026-09-11 23:22:00","updatedAt":"2026-09-11 23:22:00","wrong":"没人觉\"我\"重要","scene":"","name":"重要性外求","correction":{"name":"重要性外求","correction":"重要性不是被分配的，是在单机游戏里由玩家自己设定的。等别人确认\"你很重要\"，等于把主线任务交给了NPC。","basis":"世界观：每个人都在自己的单机游戏中扮演主角；人生观：活出清醒自主","practice":"写下\"我的主线任务是什么\"，今天为它做一件事，不告诉任何人。"}},{"id":"b20260911_23","ts":"2026-09-11 23:23:00","updatedAt":"2026-09-11 23:23:00","wrong":"人类不可信","scene":"","name":"全类不信任","correction":{"name":"全类不信任","correction":"绝对不信和绝对信，都是把判断关掉。可操作的是分层授信：按行为记录给权限，而不是按类别下判决。","basis":"外部素材处理规则：精神掠夺者分类工具；认知方式：识别植入观念","practice":"把人际分三层（可托付／可合作／仅礼貌），依据观察到的行为上下调整，不用一句\"人类不可信\"全盖住。"}},{"id":"b20260911_24","ts":"2026-09-11 23:24:00","updatedAt":"2026-09-11 23:24:00","wrong":"现实不是\"我\"创造的","scene":"","name":"现实外归因","correction":{"name":"现实外归因","correction":"现实是帷幕，不是我写的；但我对现实的解释、注意力和反应，是我写的。能改写的是软设置，改不了的是外部场景——把力气花在前者。","basis":"世界观：现实是巨大的投影帷幕；人生观：软设置可通过持续突破重塑","practice":"对每个不满的场景，圈出我能改的那两成（我的解释、我的动作），只做这部分。"}},{"id":"b20260911_25","ts":"2026-09-11 23:25:00","updatedAt":"2026-09-11 23:25:00","wrong":"对未知的恐惧","scene":"","name":"未知灾难化","correction":{"name":"未知灾难化","correction":"未知被演算成危险，是生存本能在抢方向盘。未知只是信息缺失，不是负面结论。我只装备下一步的灯，不要求看清全程。","basis":"核心观点7：负面情绪源于死亡焦虑；核心观点5：只有当下","practice":"写下\"我现在确实不知道的是___\"，再写\"在知道之前，我先做___\"。不做预测。"}},{"id":"b20260911_26","ts":"2026-09-11 23:26:00","updatedAt":"2026-09-11 23:26:00","wrong":"用头脑做事","scene":"","name":"过度思辨","correction":{"name":"过度思辨","correction":"头脑可以是好司机，也可以是抢方向盘的那个。知→悟→行→证，停在知和悟上不算掌握，行过、证过才算。思考是为了产出下一步动作，不是为了换安全感。","basis":"文章结构：知→悟→行→证，证需三到五次重复练习固化；张力：识神可被训练成好司机","practice":"任何分析超过十分钟，强制产出一个可执行的下一步动作，然后立刻去做。"}},{"id":"b20260911_27","ts":"2026-09-11 23:27:00","updatedAt":"2026-09-11 23:27:00","wrong":"做事会消耗生命","scene":"","name":"消耗叙事","correction":{"name":"消耗叙事","correction":"消耗生命的不是做事本身，是一边做一边抗拒、一边做一边比较。同一件事，带着抵触做是耗电，带着专注做是充电。要看后台跑了什么，而不是做了多少。","basis":"人生观：活在当下，专注每一刻；核心观点4：期待本质是匮乏","practice":"做事前先关一个后台程序（比较／求认可／预演结果），做完记录能量是升还是降。"}},{"id":"b20260911_28","ts":"2026-09-11 23:28:00","updatedAt":"2026-09-11 23:28:00","wrong":"别人的情绪会对\"我\"造成实质伤害","scene":"","name":"情绪共振","correction":{"name":"情绪共振","correction":"情绪是在同一个场里自动传播的外部程序，我被带跑只是因为没切断。真正造成实质伤害的，是我共振之后做出的行为，不是情绪本身。定力是可以练出来的切断能力。","basis":"核心观点6：所有人处于同一能量场，情绪自动传播，定力可切断共振（量子纠缠为物理锚点）","practice":"感觉被别人的情绪拖走时，先三次呼吸，分辨\"这是我的还是他的\"，再决定要不要回应；不共振也是一种回应。"}},{"id":"b20260911_29","ts":"2026-09-11 23:29:00","updatedAt":"2026-09-11 23:29:00","wrong":"没有钱是危险不可控的，会被别人奴役","scene":"","name":"匮乏恐惧","correction":{"name":"匮乏恐惧","correction":"危险是真的，\"不可控\"是我加的。资源少会缩小选项，但被奴役需要先交出判断权。建缓冲（存款、技能、可替代收入）是动作，预演被奴役只是消耗。","basis":"价值观：反对以金钱物化人；张力共存：外部有精神掠夺 vs. 解法全在自己身上；核心观点7死亡焦虑","practice":"把恐惧换成数字：月最低生存线多少、现有缓冲能撑几个月、本周能多一个什么选项。算完就去做最小的那个。"}},{"id":"b20260911_30","ts":"2026-09-11 23:30:00","updatedAt":"2026-09-11 23:30:00","wrong":"认为事情应该按照\"我\"想要的方式进展","scene":"","name":"应该思维","correction":{"name":"应该思维","correction":"拿一个幻想的剧本去要求现实，落差就是痛苦本身。期待即匮乏，是对当下的不满。方向可以留着（那是意图），剧本必须放下（那是执念）。","basis":"核心观点1：痛苦源于想法与现实不符；核心观点4：期待即匮乏；核心观点5：规划是当下的行动指南，不是必须兑现的剧本","practice":"一出现\"应该\"就改写：\"我希望__，但现实是__，我调整___\"。一次改一句。"}}];
+const LS_BUGS='mw_bugs', LS_KEY='mw_ai_key', LS_KEY_ALI='mw_ali_key',
+      LS_PROVIDER='mw_ai_provider', LS_MODEL='mw_ai_model', LS_KERNEL='mw_kernel',
+      LS_TOKEN='mw_gist_token', LS_ID='mw_gist_id', LS_AUTO='mw_auto_sync', LS_UI='mw_ui';
+const GIST_FN='bug-watch-data.json';
+// AI 端点改为按服务商在 callAI() 内动态选择（DeepSeek / 阿里云百炼 DashScope）
+const BUG_FIELDS=['name','correction','basis','practice'];
+
+let bugs=[];
+let syncing=false;
+
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function nowStr(){const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());}
+function newId(){const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())+p(Math.floor(Math.random()*100));}
+
+function load(){try{bugs=JSON.parse(localStorage.getItem(LS_BUGS))||[];}catch(e){bugs=[];}}
+function saveBugs(){localStorage.setItem(LS_BUGS,JSON.stringify(bugs));}
+function visibleBugs(){return bugs.filter(b=>!b.deleted).sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));}
+
+function render(){
+  $('st-bug').textContent=visibleBugs().length;
+  renderBugs();
+}
+function renderBugs(){
+  const list=$('bug-list'),bs=visibleBugs();
+  if(!bs.length){list.innerHTML='<li class="empty">还没有记录错误思维。写下那个反复冒出来的念头。</li>';return;}
+  list.innerHTML=bs.map(b=>{
+    const c=b.correction||{};
+    let cor='';
+    if(c.correction){
+      cor='<div class="bug-cor"><span class="lb">✅ 正确观念（对照内核生成）</span><div>'+esc(c.correction)+'</div>'
+        +(c.basis?'<div class="bug-basis">📎 内核依据：'+esc(c.basis)+'</div>':'')
+        +(c.practice?'<div class="bug-basis" style="border-color:var(--amber)">🛠 事中练习：'+esc(c.practice)+'</div>':'')+'</div>';
+    }else{
+      cor='<div class="bug-empty-cor">尚未修正——点「⚡ 对照内核修正」，AI 会依据你的认知内核生成正确观念。</div>';
+    }
+    return '<li><div class="t-head"><span class="t-time">'+esc((b.ts||'').slice(0,16))+'</span>'
+      +(b.name?'<span class="t-tag" style="background:var(--green);color:#fff">'+esc(b.name)+'</span>':'')
+      +'<span class="t-del" onclick="delBug(\''+esc(b.id)+'\')">删除</span></div>'
+      +'<div class="bug-raw">❌ '+esc(b.wrong)+'</div>'
+      +(b.scene?'<div class="bug-scene">场景：'+esc(b.scene)+'</div>':'')
+      +cor
+      +'<div class="bar"><button class="link" onclick="correctBug(\''+esc(b.id)+'\')">'+(c.correction?'↻ 重新修正':'⚡ 对照内核修正')+'</button></div>'
+      +'</li>';
+  }).join('');
+}
+function saveBug(){
+  const wrong=$('b-input').value.trim();
+  const err=$('b-err');err.style.display='none';
+  if(!wrong){err.textContent='先写下错误思维的原话';err.style.display='block';return;}
+  bugs.push({id:newId(),ts:nowStr(),updatedAt:nowStr(),wrong:wrong.slice(0,600),
+    scene:$('b-scene').value.trim().slice(0,200),name:'',correction:null});
+  saveBugs();render();ensureOpen('colBugs');
+  $('b-input').value='';$('b-scene').value='';
+}
+function uiState(){try{return JSON.parse(localStorage.getItem(LS_UI))||{};}catch(e){return {};}}
+function saveUI(u){localStorage.setItem(LS_UI,JSON.stringify(u));}
+function applyUI(){
+  COLLAPSIBLE.forEach(({key,body,btn})=>{
+    const el=$(body);if(!el)return;
+    const col=!!uiState()[key];
+    el.style.display=col?'none':'';
+    const b=$(btn);if(b)b.textContent=col?'展开 ▼':'收起 ▲';
+  });
+}
+const COLLAPSIBLE=[{key:'colBugs',body:'bug-list',btn:'bug-toggle'},{key:'colKernel',body:'kernel-body',btn:'kernel-toggle'}];
+function toggleSec(key){
+  const u=uiState();u[key]=u[key]?0:1;saveUI(u);applyUI();
+  if(key==='colKernel'&&$('kernel-edit'))updateKernelInfo($('kernel-edit').value);
+}
+function updateKernelInfo(txt){
+  const el=$('kernel-info');if(!el)return;
+  txt=txt||'';
+  if(!txt.trim()){el.textContent='未载入';return;}
+  const lines=txt.split(/\n+/).filter(x=>x.trim());
+  const first=lines[0]?lines[0].replace(/^[#【\s]+/,'').slice(0,18):'(无标题)';
+  el.textContent='已载入 · '+txt.length+' 字 · 首行：'+first+(uiState().colKernel?'（已收起）':'');
+}
+function saveKernel(){
+  localStorage.setItem(LS_KERNEL,$('kernel-edit').value);
+  updateKernelInfo($('kernel-edit').value);
+  status('认知内核已保存（'+$('kernel-edit').value.length+' 字）','ok');
+}
+function clearKernel(){
+  if(!confirm('清空当前认知内核？此操作只清本机，已同步到 Gist 的版本不受影响。'))return;
+  localStorage.removeItem(LS_KERNEL);$('kernel-edit').value='';updateKernelInfo('');
+  status('认知内核已清空','ok');
+}
+function ensureOpen(key){
+  const u=uiState();
+  if(u[key]){u[key]=0;saveUI(u);applyUI();}
+}
+function loadPreset(){
+  if(!confirm('载入 30 条预设错误思维（已按认知内核 v4 修正好）？已存在的不会重复添加。'))return;
+  bugs=mergeThoughts(bugs,PRESET_BUGS);
+  saveBugs();render();ensureOpen('colBugs');
+  if(autoSync())syncNow(true);
+  status('已载入预设清单，当前错误思维 '+visibleBugs().length+' 条','ok');
+}
+function delBug(id){
+  if(!confirm('删除这条错误思维记录？（会同步到其他设备）'))return;
+  const b=bugs.find(x=>x.id===id);
+  if(b){b.deleted=true;b.updatedAt=nowStr();saveBugs();render();if(autoSync())syncNow(true);}
+}
+async function correctBug(id){
+  const b=bugs.find(x=>x.id===id);
+  if(!b)return;
+  const kernel=localStorage.getItem(LS_KERNEL)||'';
+  if(!kernel){alert('请先在上方「🧠 认知内核」里粘贴你的认知内核（kernel.md 内容），修正才有依据。');return;}
+  const provider=localStorage.getItem(LS_PROVIDER)||'deepseek';
+  const apiKey=provider==='ali'?localStorage.getItem(LS_KEY_ALI):localStorage.getItem(LS_KEY);
+  if(!apiKey){alert('请先在「设置」里选择「'+(provider==='ali'?'阿里云百炼':'DeepSeek')+'」并填写对应的 API Key，保存后再修正。');return;}
+  const btns=document.querySelectorAll('#bug-list .link');
+  btns.forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').indexOf(id)>=0){x.disabled=true;x.textContent='修正中…';}});
+  try{
+    const P=[];
+    P.push('【用户的认知内核】\n'+kernel.slice(0,5000));
+    P.push('\n【待修正的错误思维】');
+    P.push('错误思维原话：'+b.wrong);
+    if(b.scene)P.push('触发场景：'+b.scene);
+    P.push('\n请基于认知内核修正这个错误思维。只输出严格 JSON（不要额外文字），字段：'
+      +'name(给这个错误思维模式命名，2-4 个字，参考内核高频主题词如 认可渴求/投射/死亡焦虑/观念茧房)，'
+      +'correction(用第一人称写的正确观念，2-3 句，口语化、有力，符合内核的反常识风格，不说教不鸡汤)，'
+      +'basis(内核依据：指出这来自内核的哪条观点或哪个部分，≤50 字)，'
+      +'practice(下次这个念头冒出来时，当场可做的一个具体练习或替换句，≤60 字)。');
+    const system='你是用户的认知修正助手。严格基于用户提供的认知内核，把他的错误思维修正为符合内核的正确观念。只输出严格 JSON。';
+    const raw=await callAI(system,P.join('\n'),400);
+    let data;try{data=JSON.parse(raw);}catch(e){throw new Error('AI 返回格式异常');}
+    const out={};
+    BUG_FIELDS.forEach(k=>out[k]=String(data[k]==null?'':data[k]).trim());
+    if(!out.correction)throw new Error('AI 未返回修正内容');
+    b.name=out.name;b.correction=out;b.updatedAt=nowStr();
+    saveBugs();render();
+  }catch(e){alert('修正失败：'+e.message);render();}
+}
+function onProviderChange(){
+  const p=$('s-provider').value;
+  $('row-key-deepseek').style.display=(p==='deepseek')?'':'none';
+  $('row-key-ali').style.display=(p==='ali')?'':'none';
+}
+
+async function callAI(system,user,maxTokens){
+  const provider=localStorage.getItem(LS_PROVIDER)||'deepseek';
+  let endpoint,apiKey,model,isDeepseek;
+  if(provider==='ali'){
+    apiKey=localStorage.getItem(LS_KEY_ALI)||'';
+    endpoint='https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+    model=localStorage.getItem(LS_MODEL)||'qwen-plus';
+    isDeepseek=false;
+  }else{
+    apiKey=localStorage.getItem(LS_KEY)||'';
+    endpoint='https://api.deepseek.com/chat/completions';
+    model=localStorage.getItem(LS_MODEL)||'deepseek-v4-flash';
+    isDeepseek=true;
+  }
+  if(!apiKey)throw new Error('请先在「设置」里选择「'+(provider==='ali'?'阿里云百炼(DashScope)':'DeepSeek')+'」并填写对应的 API Key，保存后再用 AI 功能。');
+  const body={model:model,messages:[{role:'system',content:system},{role:'user',content:user}],max_tokens:maxTokens};
+  if(isDeepseek)body.thinking={type:'disabled'};
+  const res=await fetch(endpoint,{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+    body:JSON.stringify(body)});
+  if(!res.ok){let m='HTTP '+res.status;try{const j=await res.json();m=(j.error&&j.error.message)||j.message||m;}catch(e){}throw new Error(m);}
+  const j=await res.json();
+  let raw=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'';
+  raw=raw.replace(/^```(?:json)?/i,'').replace(/```$/,'');
+  return raw.trim();
+}
+function autoSync(){return localStorage.getItem(LS_AUTO)==='1';}
+function getToken(){return localStorage.getItem(LS_TOKEN)||'';}
+function getGistId(){return localStorage.getItem(LS_ID)||'';}
+function setGistId(i){i?localStorage.setItem(LS_ID,i):localStorage.removeItem(LS_ID);}
+function status(msg,kind){const el=$('syncStatus');el.textContent=msg;el.className='sync-status'+(kind?' '+kind:'');}
+function ghFetch(url,opts){
+  opts=opts||{};
+  opts.headers=Object.assign({Authorization:'token '+getToken(),'Content-Type':'application/json'},opts.headers||{});
+  return fetch(url,opts);
+}
+function mergeThoughts(local,remote){
+  const map=new Map();
+  (local||[]).concat(remote||[]).forEach(t=>{
+    if(!t||!t.id)return;
+    const cur=map.get(t.id);
+    if(!cur){map.set(t.id,t);return;}
+    const a=String(t.updatedAt||t.ts||''),b=String(cur.updatedAt||cur.ts||'');
+    if(a.localeCompare(b)>0)map.set(t.id,t);
+  });
+  return Array.from(map.values());
+}
+function buildPayload(){
+  return JSON.stringify({app:'错误思维修正',version:1,syncedAt:new Date().toISOString(),
+    kernel:localStorage.getItem(LS_KERNEL)||'',bugs:bugs});
+}
+async function pullFromGist(){
+  const id=getGistId();if(!id)return null;
+  const r=await ghFetch('https://api.github.com/gists/'+id);
+  if(!r.ok)throw new Error('拉取失败('+r.status+')');
+  const d=await r.json();
+  const f=d.files&&d.files[GIST_FN];
+  if(!f||!f.content)return{};
+  return JSON.parse(f.content);
+}
+async function pushToGist(){
+  const content=buildPayload(),id=getGistId();
+  if(id){
+    const r=await ghFetch('https://api.github.com/gists/'+id,{method:'PATCH',
+      body:JSON.stringify({files:{[GIST_FN]:{content:content}}})});
+    if(!r.ok)throw new Error('上传失败('+r.status+')');
+  }else{
+    const r=await ghFetch('https://api.github.com/gists',{method:'POST',
+      body:JSON.stringify({description:'错误思维修正 · 数据同步',public:false,files:{[GIST_FN]:{content:content}}})});
+    if(!r.ok)throw new Error('创建失败('+r.status+')');
+    setGistId((await r.json()).id);
+  }
+}
+async function findSyncGist(){
+  try{
+    const r=await ghFetch('https://api.github.com/gists?per_page=100');
+    if(!r.ok)return null;
+    const list=await r.json();
+    if(!Array.isArray(list))return null;
+    let best=null,bestCount=-1,bestTime='';
+    for(const g of list){
+      if(!g.files||!g.files[GIST_FN])continue;
+      const dr=await ghFetch(g.url);
+      if(!dr.ok)continue;
+      const d=await dr.json();
+      const f=d.files&&d.files[GIST_FN];
+      if(!f||!f.content)continue;
+      let n=0,synced='';
+      try{const p=JSON.parse(f.content);
+        n=Array.isArray(p.bugs)?p.bugs.length:0;
+        synced=p.syncedAt||d.updated_at||'';}catch(e){continue;}
+      if(n>bestCount||(n===bestCount&&synced>bestTime)){best=g.id;bestCount=n;bestTime=synced;}
+    }
+    return best?{id:best,count:bestCount}:null;
+  }catch(e){return null;}
+}
+async function syncNow(silent){
+  if(syncing)return;
+  if(!getToken()){status('请先粘贴并保存 gist 令牌','err');return;}
+  syncing=true;
+  if(!silent)status('同步中…');
+  try{
+    const best=await findSyncGist();
+    if(best&&best.id!==getGistId())setGistId(best.id);
+    const remote=await pullFromGist();
+    if(remote&&remote.bugs){bugs=mergeThoughts(bugs,remote.bugs);pruneTombstones();saveBugs();}
+    await pushToGist();
+    status('已同步 · 错误思维 '+visibleBugs().length+' 条（'+new Date().toLocaleString()+'）','ok');
+    render();
+  }catch(e){status('同步出错：'+e.message,'err');}
+  finally{syncing=false;}
+}
+function pruneTombstones(){
+  const cut=Date.now()-60*864e5;
+  bugs=bugs.filter(t=>{
+    if(!t.deleted)return true;
+    const d=new Date(String(t.updatedAt||'').replace(/-/g,'/')).getTime();
+    return !(d&&d<cut);
+  });
+}
+function saveSetup(){
+  const k=$('s-key').value.trim();
+  if(k&&!/^已保存/.test(k))localStorage.setItem(LS_KEY,k);
+  const ka=$('s-key-ali').value.trim();
+  if(ka&&!/^已保存/.test(ka))localStorage.setItem(LS_KEY_ALI,ka);
+  localStorage.setItem(LS_PROVIDER,$('s-provider').value);
+  localStorage.setItem(LS_MODEL,$('s-model').value.trim());
+  const t=$('s-token').value.trim();
+  if(t&&!/^已保存/.test(t))localStorage.setItem(LS_TOKEN,t);
+  localStorage.setItem(LS_AUTO,$('s-auto').checked?'1':'0');
+  status('设置已保存到本机','ok');
+}
+function pickKernelFile(){$('kernel-file').click();}
+function pickImport(){$('s-import-file').click();}
+function exportJson(){
+  const blob=new Blob([JSON.stringify({app:'错误思维修正',version:1,exportedAt:new Date().toISOString(),
+    kernel:localStorage.getItem(LS_KERNEL)||'',bugs:bugs},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='错误思维修正备份-'+nowStr().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(a.href);
+}
+async function syncToWorkbench(){
+  const bs=visibleBugs();
+  if(!bs.length){status('还没有可同步的记录','err');return;}
+  status('同步中…（错误思维 '+bs.length+' 条）');
+  try{
+    const r=await fetch(api('/api/mind/save'),{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({thoughts:[],bugs:bs})});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
+    status('✓ 已同步到云端内容库：错误思维新增 '+(j.bugs_added||0)+' 条，落盘 思维监控/'+j.file,'ok');
+  }catch(e){
+    status('同步失败：'+e.message+'（请检查网络后重试）','err');
+  }
+}
+function setupFiles(){
+  $('kernel-file').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{$('kernel-edit').value=String(r.result).slice(0,12000);saveKernel();};
+    r.readAsText(f,'utf-8');e.target.value='';
+  });
+  $('s-import-file').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.readAsText(f,'utf-8');
+    r.onload=()=>{
+      try{
+        const d=JSON.parse(String(r.result));
+        if(!d.bugs)throw new Error('文件里没有 bugs 字段');
+        bugs=mergeThoughts(bugs,d.bugs);
+        if(d.kernel)localStorage.setItem(LS_KERNEL,d.kernel);
+        saveBugs();render();status('已导入，错误思维 '+visibleBugs().length+' 条','ok');
+      }catch(err){status('导入失败：'+err.message,'err');}
+      e.target.value='';
+    };
+  });
+}
+function initSetup(){
+  const k=localStorage.getItem(LS_KEY)||'';
+  if(k)$('s-key').value='已保存（'+k.slice(0,4)+'…'+k.slice(-4)+'）';
+  const ka=localStorage.getItem(LS_KEY_ALI)||'';
+  if(ka)$('s-key-ali').value='已保存（'+ka.slice(0,4)+'…'+ka.slice(-4)+'）';
+  $('s-provider').value=localStorage.getItem(LS_PROVIDER)||'deepseek';
+  $('s-model').value=localStorage.getItem(LS_MODEL)||'';
+  const k0=localStorage.getItem(LS_KERNEL)||'';
+  $('kernel-edit').value=k0;updateKernelInfo(k0);
+  const t=getToken();
+  if(t)$('s-token').value='已保存（'+t.slice(0,4)+'…'+t.slice(-4)+'）';
+  $('s-auto').checked=autoSync();
+  onProviderChange();
+  if(getGistId())status('已绑定同步 Gist，可立即同步','ok');
+}
+load();render();initSetup();setupFiles();applyUI();
+if(!$('kernel-edit').value.trim()) loadCloudKernel(true);
+pullCloudStat();
+if(getToken())syncNow(true);
+</script>
+</body>
+</html>
