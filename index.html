@@ -3,184 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>素材采集 · 手机端</title>
+<title>我的云端工作台</title>
 <style>
   :root{--bg:#f5f1ea;--card:#fff;--ink:#2b2722;--muted:#8a8175;--line:#ebe4d8;
     --accent:#d64a3a;--accent-soft:#fbe9e6;--green:#3a9d6e;--blue:#3a78c2}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
-    background:var(--bg);color:var(--ink);padding:14px;max-width:560px;margin:0 auto}
-  h1{font-size:19px;margin:4px 0 2px;color:var(--accent)}
-  .sub{font-size:12px;color:var(--muted);margin-bottom:12px}
-  .status{display:inline-block;font-size:12px;padding:3px 10px;border-radius:20px;margin-bottom:12px}
-  .status.ok{background:#e8f5ee;color:#1f7a4d}
-  .status.err{background:#fdecea;color:#b23b2e}
-  .tabs{display:flex;gap:8px;margin-bottom:12px}
-  .tab{flex:1;text-align:center;padding:10px;border-radius:11px;background:#fff;border:1px solid var(--line);
-    font-size:14px;font-weight:600;color:var(--muted);cursor:pointer}
-  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 5px}
-  input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;
-    font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
-  textarea{resize:vertical;min-height:150px;line-height:1.5}
-  .btn{width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;
-    background:var(--accent);color:#fff;margin-top:6px;cursor:pointer}
-  .btn:active{filter:brightness(.95)}
-  .btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
-  .msg{padding:11px 13px;border-radius:10px;font-size:13px;margin-top:10px;display:none;line-height:1.6}
-  .msg.ok{background:#e8f5ee;color:#1f7a4d}
-  .msg.err{background:#fdecea;color:#b23b2e}
-  .msg.warn{background:#fff4e5;color:#a5621a}
-  button.btn:disabled{opacity:.55}
-  .msg code{background:rgba(0,0,0,.06);padding:1px 6px;border-radius:5px}
-  .row{display:flex;gap:10px}.row>div{flex:1}
-  details{margin-top:10px}.summary{font-size:12px;color:var(--muted);cursor:pointer}
-  .hint{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+    background:var(--bg);color:var(--ink);padding:18px;max-width:560px;margin:0 auto}
+  h1{font-size:22px;margin:6px 0 2px;color:var(--accent)}
+  .sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;
+    text-decoration:none;color:var(--ink);display:block;transition:.15s}
+  .card:active{filter:brightness(.97)}
+  .card .ico{font-size:26px}
+  .card .t{font-size:15px;font-weight:700;margin-top:8px}
+  .card .d{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .card.ext{background:linear-gradient(135deg,#eef4ff,#f6f1ff)}
+  .card.disabled{opacity:.6;pointer-events:none;background:#f3efe9;color:var(--muted)}
+  .card.disabled .d{color:#a89e90}
+  .foot{font-size:11px;color:var(--muted);margin-top:18px;text-align:center;line-height:1.6}
 </style>
 </head>
 <body>
-  <h1>素材采集</h1>
-  <div class="sub">一个入口，自动归类到内容数据库</div>
-  <div id="conn" class="status err">● 连接中…</div>
+  <h1>我的云端工作台</h1>
+  <div class="sub">内容数据库的前端入口 · 后端跑在腾讯云函数（SCF），手机随手就能用。</div>
 
-  <div class="tabs">
-    <div class="tab active" data-mode="paste" onclick="switchTab('paste')">✎ 粘贴正文</div>
-    <div class="tab" data-mode="url" onclick="switchTab('url')">🔗 只贴链接</div>
+  <div class="grid">
+    <a class="card" href="./采集.html">
+      <div class="ico">☁️</div>
+      <div class="t">云端素材采集</div>
+      <div class="d">甩链接 / 贴正文 → 自动分类入库</div>
+    </a>
+    <a class="card" href="./干货.html">
+      <div class="ico">📚</div>
+      <div class="t">干货采集</div>
+      <div class="d">存原文 + 来源，分类可 AI</div>
+    </a>
+    <a class="card" href="./内核.html">
+      <div class="ico">🧠</div>
+      <div class="t">认知内核沉淀</div>
+      <div class="d">提炼世界观 / 价值观引擎</div>
+    </a>
+    <a class="card ext" href="https://karie622.github.io/mind-watch/" target="_blank" rel="noopener">
+      <div class="ico">🧭</div>
+      <div class="t">思维监控</div>
+      <div class="d">记录念头 / 循环提醒 →</div>
+    </a>
+    <a class="card disabled" href="#">
+      <div class="ico">📖</div>
+      <div class="t">微信读书</div>
+      <div class="d">本地运行 · 在家电脑打开（不上云端）</div>
+    </a>
   </div>
 
-  <!-- 粘贴正文 -->
-  <div class="card" id="panel-paste">
-    <div class="row">
-      <div>
-        <label>类型</label>
-        <select id="p-type">
-          <option>文字</option><option>观点</option><option>文章</option><option>视频</option>
-        </select>
-      </div>
-      <div>
-        <label>类别提示（可选）</label>
-        <select id="p-hint"><option value="">不预设（自动分类）</option>
-          <option>社会观察</option><option>内在修行</option><option>人际关系</option>
-          <option>能力提升</option><option>健康管理</option><option>效率提升</option></select>
-      </div>
-    </div>
-    <label>标题（可选，留空取首行）</label>
-    <input id="p-title" placeholder="例如：为什么我们总在关系里重复同样的剧本">
-    <label>正文 / 观点</label>
-    <textarea id="p-content" placeholder="粘贴全文、摘要或你当下的观点…"></textarea>
-    <button class="btn" onclick="submitPaste()">归入分类库</button>
-  </div>
-
-  <!-- 只贴链接 -->
-  <div class="card" id="panel-url" style="display:none">
-    <label>文章链接（公众号 / 知乎 / 网页…）</label>
-    <input id="u-url" placeholder="https://...">
-    <label>类别提示（可选）</label>
-    <select id="u-hint"><option value="">不预设（自动分类）</option>
-      <option>社会观察</option><option>内在修行</option><option>人际关系</option>
-      <option>能力提升</option><option>健康管理</option><option>效率提升</option></select>
-    <button class="btn" onclick="submitUrl()">抓取并归类</button>
-    <div class="hint">服务端会自动抓取网页正文、提炼核心观点并归类。</div>
-  </div>
-
-  <details>
-    <summary class="summary">⚙ DeepSeek Key（用于 AI 精修，可选）</summary>
-    <div class="card" style="margin-top:8px">
-      <input id="ds-key" placeholder="sk-...">
-      <div class="hint">不填则仅做规则粗分，核心观点留待后续 AI 补充。Key 仅存本机浏览器。</div>
-    </div>
-  </details>
-
-  <div id="msg" class="msg"></div>
-
-<script>
-const $=id=>document.getElementById(id);
-// API 地址：默认同源。腾讯云函数 URL 的默认域名对大陆 IP 会强制下载、无法渲染页面，
-// 届时把本页托管到别处（如 GitHub Pages），用 ?api=https://xxx.tencentscf.com 指定后端即可。
-const DEFAULT_API='https://1488221122-fm448vw4ra.ap-beijing.tencentscf.com';
-const API_BASE=(function(){
-  const norm=u=>(u||'').trim().replace(/\/+$/,'');
-  try{                                  // ?api=https://xxx 显式覆盖，并记住
-    const q=norm(new URLSearchParams(location.search).get('api'));
-    if(q){localStorage.setItem('cdb_api_base',q);return q;}
-  }catch(e){}
-  try{
-    const s=norm(localStorage.getItem('cdb_api_base'));
-    if(s)return s;
-  }catch(e){}
-  // 本页不是由腾讯云函数域提供时（如 GitHub Pages / 本地直开），默认指向云端后端；
-  // 同源部署时留空走相对路径。
-  const h=(location.hostname||'').toLowerCase();
-  return h.endsWith('tencentscf.com')?'':DEFAULT_API;
-})();
-let SERVER_OK=false;
-
-function switchTab(m){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.mode===m));
-  $('panel-paste').style.display=(m==='paste')?'block':'none';
-  $('panel-url').style.display=(m==='url')?'block':'none';
-}
-function showMsg(type,html){const m=$('msg');m.className='msg '+type;m.innerHTML=html;m.style.display='block';}
-function hideMsg(){$('msg').style.display='none';}
-
-async function checkServer(){
-  try{
-    const r=await fetch(API_BASE+'/api/stats',{signal:AbortSignal.timeout(2500)});
-    if(r.ok){SERVER_OK=true;$('conn').className='status ok';$('conn').textContent='● 已连接，将真实写入内容数据库';return;}
-    throw 0;
-  }catch(e){SERVER_OK=false;$('conn').className='status err';
-    $('conn').textContent='● 未连接（后端不可达，请检查 api 地址）';}
-}
-
-function dsKey(){const k=$('ds-key').value.trim();localStorage.setItem('cdb_ds_key',k);return k;}
-function loadKey(){const k=localStorage.getItem('cdb_ds_key')||'';if(k)$('ds-key').value=k;}
-
-async function submitPaste(){
-  hideMsg();
-  const content=$('p-content').value.trim();
-  if(!content){showMsg('err','请先粘贴正文或观点。');return;}
-  const d={type:$('p-type').value,title:$('p-title').value.trim(),content,
-    category_hint:$('p-hint').value,key:dsKey()};
-  await ingest('/api/auto-ingest',d,'已存入分类库');
-}
-async function submitUrl(){
-  hideMsg();
-  const url=$('u-url').value.trim();
-  if(!url){showMsg('err','请先粘贴文章链接。');return;}
-  const d={url,category_hint:$('u-hint').value,key:dsKey()};
-  await ingest('/api/fetch-url',d,'抓取并归类完成');
-}
-
-let BUSY=false;
-function setBusy(b){
-  BUSY=b;
-  document.querySelectorAll('button.btn').forEach(function(x){x.disabled=b;});
-}
-
-async function ingest(path,d,okText){
-  if(!SERVER_OK){showMsg('err','未连接本地服务，无法落库。请确认电脑端已启动工作台代理。');return;}
-  if(BUSY){showMsg('err','正在提交中，请勿重复点击。');return;}
-  setBusy(true);
-  try{
-    const r=await fetch(API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
-    const j=await r.json();
-    if(!r.ok||!j.ok){showMsg('err','✗ '+((j&&j.error)||'请求失败'));return;}
-    const tag=j.ai_refined?'（AI 精修）':'（规则粗分）';
-    if(j.suspicious){
-      showMsg('warn','⚠️ 抓取内容疑似异常（可能是反爬/验证页）<br>已归入 <b>'+esc(j.category)+'</b> '+tag
-        +'<br>ID：<code>'+(j.id||'')+'</code><br>建议改用「✎ 粘贴正文」手动录入。');
-    }else{
-      showMsg('ok','✓ '+okText+'：<b>'+esc(j.category)+'</b> '+tag+'<br>标题：'+esc(j.title||d.title||'')+'<br>ID：<code>'+(j.id||'')+'</code>');
-    }
-    $('p-content').value='';$('p-title').value='';$('u-url').value='';
-  }catch(e){showMsg('err','✗ 网络错误：'+e.message);}
-  finally{setBusy(false);}
-}
-function esc(s){return (s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
-
-loadKey();
-checkServer();
-</script>
+  <div class="foot">所有数据由你的云端后端（Tencent SCF）读写 · GitHub Pages 仅托管前端</div>
 </body>
 </html>
