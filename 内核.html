@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>认知内核 · 个人认知飞轮引擎</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#ffffff; --line:#e3e8ef; --ink:#1f2d3d; --mut:#6b7a8d;
+    --brand:#7F77DD; --brand2:#534AB7; --ok:#1D9E75; --warn:#BA7517; --red:#E24B4A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.6;font-size:14px}
+  header{background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;
+    padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  header h1{margin:0;font-size:18px;font-weight:600}
+  header .sub{font-size:12px;opacity:.85;margin-top:2px}
+  .back{color:#fff;text-decoration:none;font-size:13px;border:1px solid rgba(255,255,255,.5);
+    padding:6px 13px;border-radius:8px;white-space:nowrap}
+  .back:hover{background:rgba(255,255,255,.15)}
+  .wrap{max-width:1000px;margin:18px auto 40px;padding:0 16px}
+  .banner{font-size:13px;color:var(--mut);background:#eef2f8;border:1px solid var(--line);
+    border-radius:10px;padding:11px 14px;margin-bottom:14px;line-height:1.7}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .pill{font-size:12px;padding:4px 11px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--mut)}
+  .pill.on{color:var(--ok);border-color:#bfe6d6;background:#f2fbf7}
+  .pill.off{color:var(--red);border-color:#f3c9c9;background:#fdf5f5}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .card h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .card h3 .tag{font-size:11px;font-weight:400;color:var(--mut);background:#f0f3f8;padding:2px 8px;border-radius:6px}
+  label{display:block;font-size:12.5px;color:var(--mut);margin:10px 0 4px}
+  textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font:inherit;color:var(--ink);background:#fcfdff;resize:vertical}
+  textarea:focus,input:focus{outline:none;border-color:var(--brand);background:#fff}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+  .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+  .row > div{flex:1;min-width:160px}
+  .row .narrow{flex:0 0 170px}
+  button{cursor:pointer;border:none;border-radius:10px;padding:9px 16px;font:inherit;font-weight:500;color:#fff;
+    background:var(--brand);transition:.15s}
+  button:hover{background:var(--brand2)}
+  button.ghost{background:#eef1f7;color:var(--ink)}
+  button.ghost:hover{background:#e2e7f0}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.sm{padding:5px 12px;font-size:12.5px}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  .src{font-size:12px;color:var(--mut);margin-top:6px;line-height:1.6}
+  .sp{white-space:pre-wrap;background:#0f172a;color:#d6e2ff;padding:14px;border-radius:10px;
+    font-size:12.5px;max-height:320px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.7}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1f2d3d;color:#fff;
+    padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:9;max-width:80%}
+  .toast.show{opacity:1}
+  .err{color:var(--red);font-size:12.5px;margin-top:8px;white-space:pre-wrap}
+  ul.tips{margin:8px 0 0;padding-left:18px;font-size:12.5px;color:var(--mut)}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🧠 认知内核</h1>
+    <div class="sub">把原创文章提炼成世界观 / 人生观 / 价值观 / 认知方式 —— 整套内容系统的引擎</div>
+  </div>
+  <a class="back" href="./index.html">← 返回首页</a>
+</header>
+
+<div class="wrap">
+  <div class="banner">
+    这是认知飞轮的「引擎」。内核一旦确立，分级提炼、选题生成、框架搭建、反向纠错都会以它为准绳。<br>
+    <b>建议流程：</b>把原创文章放进「内容数据库 / 3_我的原创」（支持 .txt / .md）→ 点「从我的原创提炼」→ 审阅修改 →「保存内核」。
+  </div>
+
+  <div class="bar">
+    <span class="pill" id="status">检测中…</span>
+    <span class="pill" id="updated">未保存</span>
+    <button class="ghost sm" onclick="reconnect()">↻ 重新连接</button>
+  </div>
+
+  <div class="card">
+    <h3>AI 提炼设置 <span class="tag">与内容采集工具共用同一 Key</span></h3>
+    <div class="row">
+      <div>
+        <label>DeepSeek Key</label>
+        <input type="text" id="dsKey" placeholder="sk-..." autocomplete="off">
+      </div>
+      <div class="narrow">
+        <label>模型</label>
+        <input type="text" id="dsModel" value="deepseek-v4-flash">
+      </div>
+    </div>
+    <div class="src">Key 仅保存在你本机浏览器（localStorage），不会写进代码或上传到任何地方。</div>
+  </div>
+
+  <div class="card">
+    <h3>认知内核 · 四大维度 <span class="tag">可手动增删改</span></h3>
+    <div class="grid2">
+      <div>
+        <label>世界观 · 我如何看待世界/社会/规律</label>
+        <textarea id="worldview" rows="4" placeholder="例如：世界是复杂系统，因果常非线性，个体能做的是提高判断质量而非预测结果。"></textarea>
+      </div>
+      <div>
+        <label>人生观 · 我如何看待自我与生命意义</label>
+        <textarea id="lifeview" rows="4" placeholder="例如：人生是持续的自我觉察与创造，重点不在抵达而在清醒地走。"></textarea>
+      </div>
+      <div>
+        <label>价值观 · 我看重什么、如何取舍</label>
+        <textarea id="values" rows="4" placeholder="例如：真诚 &gt; 讨好，长期 &gt; 短期，深度 &gt; 流量。"></textarea>
+      </div>
+      <div>
+        <label>认知方式 · 我如何思考与分析问题</label>
+        <textarea id="cognition" rows="4" placeholder="例如：先拆结构再下判断，警惕二元对立，用反例检验自己的结论。"></textarea>
+      </div>
+    </div>
+    <label>核心观点清单（每行一条）</label>
+    <textarea id="corePoints" rows="6" placeholder="每条一句核心判断，例如：&#10;敏感不是缺陷，而是更细的天线"></textarea>
+    <label>高频主题词（每行一个，用于选题与检索匹配）</label>
+    <textarea id="keywords" rows="3" placeholder="例如：&#10;内在修行&#10;认知迭代"></textarea>
+    <div class="src" id="srcLine"></div>
+    <div class="err" id="errLine"></div>
+    <div class="btnrow">
+      <button id="btnExtract" onclick="extract()">🧠 从我的原创提炼</button>
+      <button id="btnSave" onclick="save()">💾 保存内核</button>
+      <button class="ghost" onclick="copyPrompt()">📋 复制为 System Prompt</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔄 认知迭代 <span class="tag">思维监控新增想通瞬间 → 迭代报告 → 你确认后才更新（原创文章默认排除）</span></h3>
+    <div class="src" id="mindStat">数据源：思维监控「💡想通瞬间」（默认只喂「尚未消化」的新增条目；3_我的原创已默认排除——真知觉察等长文此前已蒸馏进内核，不再重复喂入）· 点「↻ 刷新素材统计」查看</div>
+    <div class="btnrow" style="align-items:center;gap:8px">
+      <span style="font-size:12.5px;color:var(--mut)">迭代素材</span>
+      <select id="itSources" style="max-width:340px">
+        <option value="mind_new">仅新增想通瞬间（推荐 · 不含原创文章）</option>
+        <option value="mind_all">全部想通瞬间（不含原创文章）</option>
+        <option value="all">想通瞬间 + 原创文章（旧行为）</option>
+      </select>
+      <button class="ghost sm" onclick="resetConsumed()" title="清空「已消化」进度，让全部想通瞬间重新参与迭代（内核本身不受影响）">↺ 重置已消化记录</button>
+    </div>
+    <div class="btnrow">
+      <button id="btnIterate" onclick="iterate()">🔄 开始认知迭代</button>
+      <button class="ghost sm" onclick="loadMindStat(this)">↻ 刷新素材统计</button>
+    </div>
+    <div id="itReport" style="display:none">
+      <div class="src" id="itSummary" style="margin-top:12px;font-size:13px;color:var(--ink);background:#f6f4ff;border:1px solid #ddd8f5;border-radius:10px;padding:12px 14px"></div>
+      <div id="itLists" style="margin-top:12px"></div>
+      <label>建议的新内核全文（采纳后写入，当前内核自动备份）</label>
+      <div class="sp" id="itKernel" style="max-height:420px"></div>
+      <div class="btnrow">
+        <button id="btnApply" onclick="applyIterate()">✓ 采纳并更新内核</button>
+        <button class="ghost" onclick="discardIterate()">✕ 放弃本次报告</button>
+      </div>
+    </div>
+    <div class="err" id="itErr"></div>
+  </div>
+
+  <div class="card">
+    <h3>内核原文（完整版） <span class="tag" id="kernelVer"></span></h3>
+    <div style="font-size:13px;color:#6b7280;margin:0 0 8px">这是 kernel.md 的完整内容，包含上方表单没有覆盖的段落（核心观点与边界、外部素材处理规则、表达基调、冲突处理等）。编辑请用上方表单 + 「保存内核」，此处只读展示。</div>
+    <details>
+      <summary style="cursor:pointer;user-select:none">展开 / 收起全文</summary>
+      <pre id="rawKernel" style="white-space:pre-wrap;font-size:13px;line-height:1.7;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:12px;max-height:480px;overflow:auto"></pre>
+    </details>
+  </div>
+
+  <div class="card">
+    <h3>复用：作为 AI 的系统提示词 <span class="tag">粘贴到任何对话 / 工作流</span></h3>
+    <div class="sp" id="spView">（填写或提炼内核后，这里会自动生成可直接复制的 System Prompt）</div>
+    <ul class="tips">
+      <li>内核会随内容实时更新，可直接全选复制。</li>
+      <li>建议同时粘贴到 DeepSeek / 任何 AI 对话的「系统设定」里，让它的产出与你一致。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+
+// ===== API 地址自动识别（与 index.html 一致）=====
+const DEFAULT_API='https://1488221122-fm448vw4ra.ap-beijing.tencentscf.com';
+const API_BASE=(function(){
+  const norm=u=>(u||'').trim().replace(/\/+$/,'');
+  try{
+    const q=norm(new URLSearchParams(location.search).get('api'));
+    if(q){localStorage.setItem('cdb_api_base',q);return q;}
+  }catch(e){}
+  try{
+    const s=norm(localStorage.getItem('cdb_api_base'));
+    if(s)return s;
+  }catch(e){}
+  const h=(location.hostname||'').toLowerCase();
+  return h.endsWith('tencentscf.com')?'':DEFAULT_API;
+})();
+
+// 若被嵌入 iframe（如工作台内的「认知内核」按钮），隐藏自身 header/banner，融入外层框架
+if (window.self !== window.top) {
+  var _h = document.querySelector("header"); if (_h) _h.style.display = "none";
+  var _b = document.querySelector(".banner"); if (_b) _b.style.display = "none";
+  document.body.style.background = "transparent";
+}
+var KKEY = "cdb_ds_key", KMODEL = "cdb_ds_model", LSK = "kernel_local";
+var online = false;
+var lastSources = [];
+
+function toast(msg){
+  var t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._t);
+  t._t = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+}
+
+// 去掉行首多余序号（1. / 2、/ 3) ），避免「1. 1.」双序号。
+// 只认 1-2 位数字 + 分隔符，且分隔符后不紧跟数字，以免误伤 "2.0 版本"「30岁以后」这类正文。
+function stripIdx(s){
+  return String(s == null ? "" : s)
+    .replace(/^\s*\d{1,2}\s*[.、．)）:：](?!\d)\s*/, "")
+    .trim();
+}
+
+function readFields(){
+  return {
+    worldview: $("worldview").value,
+    lifeview:  $("lifeview").value,
+    values:    $("values").value,
+    cognition: $("cognition").value,
+    corePoints: $("corePoints").value.split("\n").map(function(s){return s.trim();}).filter(Boolean),
+    keywords:   $("keywords").value.split("\n").map(function(s){return s.trim();}).filter(Boolean)
+  };
+}
+
+function fillFields(k){
+  $("worldview").value = k.worldview || "";
+  $("lifeview").value  = k.lifeview  || "";
+  $("values").value    = k.values    || "";
+  $("cognition").value = k.cognition || "";
+  var cp = k.corePoints || [];
+  var kw = k.keywords   || [];
+  if (typeof cp === "string") cp = cp.split("\n");
+  if (typeof kw === "string") kw = kw.split("\n");
+  cp = cp.map(stripIdx).filter(Boolean);   // 清掉行首自带序号，展示时由编号逻辑统一生成
+  $("corePoints").value = cp.join("\n");
+  $("keywords").value   = kw.join("\n");
+}
+
+function saveLocal(){
+  try{ localStorage.setItem(LSK, JSON.stringify(readFields())); }catch(e){}
+}
+function loadLocal(){
+  try{
+    var s = localStorage.getItem(LSK);
+    if(s){ fillFields(JSON.parse(s)); $("updated").textContent = "本地缓存"; renderPrompt(); }
+  }catch(e){}
+}
+
+async function checkServer(){
+  try{
+    var r = await fetch(API_BASE+"/api/kernel");
+    if(r.ok){
+      online = true;
+      $("status").textContent = "● 已连接本地服务";
+      $("status").className = "pill on";
+      return true;
+    }
+  }catch(e){}
+  online = false;
+  $("status").textContent = "○ 离线（仅本地缓存）";
+  $("status").className = "pill off";
+  return false;
+}
+
+async function reconnect(){
+  var ok = await checkServer();
+  if(ok){ await loadKernel(); toast("已连接，已载入已保存内核"); }
+  else { loadLocal(); toast("离线模式：显示本地缓存内核"); }
+}
+
+async function loadKernel(){
+  try{
+    var r = await fetch(API_BASE+"/api/kernel");
+    var d = await r.json();
+    if(d.exists){
+      fillFields(d);
+      $("updated").textContent = "已保存 · " + (d.updated_at || "") + (d.version ? " · " + d.version : "");
+      if($("rawKernel")) $("rawKernel").textContent = d.raw || "";
+      if($("kernelVer")) $("kernelVer").textContent = d.version || "";
+      lastSources = d.sourceArticles || [];
+      if(lastSources.length) $("srcLine").textContent = "来源文章：" + lastSources.join("、");
+      renderPrompt();
+    }else{
+      loadLocal();
+    }
+  }catch(e){ loadLocal(); }
+}
+
+async function extract(){
+  var key = $("dsKey").value.trim();
+  $("errLine").textContent = "";
+  if(!online){ toast("提炼需要本地服务，请先运行 start_workbench.bat"); return; }
+  if(!key){ toast("请先填写 DeepSeek Key"); $("dsKey").focus(); return; }
+
+  var btn = $("btnExtract");
+  btn.disabled = true; btn.textContent = "提炼中…（约 10-30 秒）";
+  try{
+    var r = await fetch(API_BASE+"/api/kernel/extract", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({key:key, model:$("dsModel").value.trim() || "deepseek-v4-flash"})
+    });
+    var d = await r.json();
+    if(!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+    var k = d.kernel || {};
+    fillFields({
+      worldview: k.worldview || k.世界观 || "",
+      lifeview:  k.lifeview  || k.人生观 || "",
+      values:    k.values    || k.价值观 || "",
+      cognition: k.cognition || k.认知方式 || "",
+      corePoints: k.corePoints || k.核心观点 || [],
+      keywords:   k.keywords   || k.高频主题 || []
+    });
+    lastSources = d.sources || [];
+    if(lastSources.length){
+      $("srcLine").innerHTML = "已从 <b>" + lastSources.length + "</b> 篇原创提炼：" + lastSources.join("、");
+    }
+    renderPrompt();
+    toast("提炼完成，请审阅后点「保存内核」");
+  }catch(e){
+    var msg = e.message || String(e);
+    if(msg.indexOf("Authentication") >= 0 || msg.indexOf("401") >= 0){
+      msg = "Key 被 DeepSeek 拒绝（401）。请检查 Key 是否有效、是否余额充足。";
+    }
+    $("errLine").textContent = "提炼失败：" + msg;
+    toast("提炼失败，详见页面提示");
+  }finally{
+    btn.disabled = false; btn.textContent = "🧠 从我的原创提炼";
+  }
+}
+
+async function save(){
+  var f = readFields();
+  f.sourceArticles = lastSources;
+  $("errLine").textContent = "";
+  if(online){
+    try{
+      var r = await fetch(API_BASE+"/api/kernel/save", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(f)
+      });
+      var d = await r.json();
+      if(!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+      $("updated").textContent = "已保存 · " + new Date().toLocaleString("zh-CN");
+      toast("内核已保存到 内容数据库 / 认知内核");
+      return;
+    }catch(e){
+      $("errLine").textContent = "保存失败：" + (e.message || e) + "（已暂存本地缓存）";
+    }
+  }
+  saveLocal();
+  $("updated").textContent = "本地缓存";
+}
+
+async function iterate(){
+  var key = $("dsKey").value.trim();
+  $("itErr").textContent = "";
+  if(!online){ toast("迭代需要本地服务，请先运行 start_workbench.bat"); return; }
+  if(!key){ toast("请先填写 DeepSeek Key"); $("dsKey").focus(); return; }
+  var btn = $("btnIterate");
+  btn.disabled = true; btn.textContent = "迭代研判中…（约 30-90 秒）";
+  $("itReport").style.display = "none";
+  var srcSel = $("itSources");
+  var srcMode = srcSel ? srcSel.value : "mind_new";
+  try{
+    var r = await fetch(API_BASE+"/api/kernel/iterate", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({key:key, model:$("dsModel").value.trim() || "deepseek-v4-flash",
+        sources: srcMode})
+    });
+    var d = await r.json();
+    if(!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+    renderReport(d.report || {});
+    $("itReport").style.display = "block";
+    toast("迭代报告已生成，请审阅");
+  }catch(e){
+    var msg = e.message || String(e);
+    if(msg.indexOf("Authentication") >= 0 || msg.indexOf("401") >= 0){
+      msg = "Key 被 DeepSeek 拒绝（401）。请检查 Key 是否有效、是否余额充足。";
+    }
+    $("itErr").textContent = "迭代失败：" + msg;
+    toast("迭代失败，详见页面提示");
+  }finally{
+    btn.disabled = false; btn.textContent = "🔄 开始认知迭代";
+  }
+}
+
+function itItem(x, color){
+  var html = "<div style='border-left:3px solid " + color + ";background:#fafbfe;border-radius:8px;padding:10px 13px;margin-bottom:9px;font-size:13px;line-height:1.75'>";
+  html += "<b>" + esc(x.point || x.new || "") + "</b>";
+  if(x.old) html += "<div style='color:var(--mut)'>原判断：" + esc(x.old) + "</div>";
+  if(x.evidence) html += "<div style='color:var(--mut)'>依据：" + esc(x.evidence) + "</div>";
+  if(x.why) html += "<div style='color:var(--mut)'>理由：" + esc(x.why) + "</div>";
+  if(x.source) html += "<div style='color:#8b95a5;font-size:12px'>—— " + esc(x.source) + "</div>";
+  return html + "</div>";
+}
+
+function esc(s){
+  return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderReport(rep){
+  $("itSummary").innerHTML = (rep._truncated
+      ? "<div style='background:#fff4f4;border:1px solid #ffc9c9;color:#c92a2a;border-radius:8px;padding:9px 12px;margin-bottom:9px;font-size:12.5px;line-height:1.7'>⚠️ <b>本次输出触顶被截断</b>：报告靠补齐 JSON 救回，【建议新内核】很可能不完整。<b>请勿直接采纳</b>——先核对下方新内核篇幅是否明显短于原内核；如偏短，请减少素材（如原创文件太大）后重跑迭代。</div>"
+      : "") +
+    "<b>迭代总评：</b>" + esc(rep.summary || "（无）") +
+    (rep.sources ? (function(s){
+      var art = s.articles_excluded
+        ? "原创文章 <b>已排除</b>（真知觉察等长文此前已蒸馏进内核，不重复喂入）"
+        : ("原创文章 " + (s.articles || 0) + " 篇");
+      var mi = "想通瞬间 <b>" + (s.mind_blocks != null ? s.mind_blocks : (s.mind_files || 0)) + "</b> 条";
+      if(s.only_new) mi += "（均为新增；另有 " + (s.mind_consumed || 0) + " 条已消化，未重复喂入）";
+      else mi += "（全部 " + (s.mind_total || s.mind_blocks || 0) + " 条）";
+      return "<div style='color:var(--mut);font-size:12px;margin-top:5px'>本次素材：" + art + " · " + mi + " · 已过滤日常记录与错误思维清单</div>";
+    })(rep.sources) : "");
+  var html = "";
+  var rc = rep.reinforce || [], rv = rep.revise || [], ad = rep.add || [];
+  if(rc.length){
+    html += "<div style='font-size:13px;font-weight:600;color:var(--ok);margin:4px 0'>✚ 强化（" + rc.length + "）—— 素材印证了内核</div>";
+    rc.forEach(function(x){ html += itItem(x, "var(--ok)"); });
+  }
+  if(rv.length){
+    html += "<div style='font-size:13px;font-weight:600;color:var(--warn);margin:10px 0 4px'>⟳ 修订（" + rv.length + "）—— 素材与内核冲突</div>";
+    rv.forEach(function(x){ html += itItem(x, "var(--warn)"); });
+  }
+  if(ad.length){
+    html += "<div style='font-size:13px;font-weight:600;color:var(--brand);margin:10px 0 4px'>★ 新增（" + ad.length + "）—— 内核尚未覆盖</div>";
+    ad.forEach(function(x){ html += itItem(x, "var(--brand)"); });
+  }
+  if(!html) html = "<div class='src'>本次素材没有产生强化/修订/新增建议。</div>";
+  $("itLists").innerHTML = html;
+  $("itKernel").textContent = rep.suggested_kernel || "（AI 未给出新内核全文）";
+  window._lastReport = rep;
+}
+
+async function applyIterate(){
+  var rep = window._lastReport;
+  if(!rep || !rep.suggested_kernel){ toast("没有可采纳的报告"); return; }
+  if(rep._truncated && !confirm("⚠️ 本次输出触顶被截断，建议的新内核可能不完整！\n\n仍要采纳会用这份可能残缺的文本覆盖 kernel.md（旧版会先备份）。\n\n确定继续？建议先「放弃」并重跑一次迭代。")) return;
+  if(!confirm("采纳后将：\n1. 备份当前内核到「认知内核备份」文件夹\n2. 用建议的新内核覆盖 kernel.md\n确定？")) return;
+  var btn = $("btnApply");
+  btn.disabled = true; btn.textContent = "写入中…";
+  try{
+    var r = await fetch(API_BASE+"/api/kernel/apply", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({suggested_kernel: rep.suggested_kernel, summary: rep.summary || ""})
+    });
+    var d = await r.json();
+    if(!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+    var extra = (d.mind_consumed_added != null)
+      ? "；本轮 " + d.mind_consumed_added + " 条想通瞬间标记为已消化（累计 " + (d.mind_consumed_total || 0) + " 条）" : "";
+    toast("内核已更新到 " + (d.version || "新版本") + "（旧版已备份：" + (d.backup || "-") + "）" + extra);
+    discardIterate();
+    await loadKernel();
+  }catch(e){
+    $("itErr").textContent = "采纳失败：" + (e.message || e);
+    toast("采纳失败，详见页面提示");
+  }finally{
+    btn.disabled = false; btn.textContent = "✓ 采纳并更新内核";
+  }
+}
+
+function discardIterate(){
+  $("itReport").style.display = "none";
+  $("itSummary").innerHTML = ""; $("itLists").innerHTML = ""; $("itKernel").textContent = "";
+  window._lastReport = null;
+}
+
+async function loadMindStat(btn){
+  var el = $("mindStat");
+  var flash = function(txt){ if(!btn) return; var t = btn.textContent; btn.textContent = txt;
+    setTimeout(function(){ btn.textContent = t; }, 1500); };
+  if(!online){ el.textContent = "离线中，连接本地服务后可查看素材统计"; flash("○ 离线"); return; }
+  try{
+    var d = {};
+    try{
+      var r0 = await fetch(API_BASE+"/api/kernel/mind_consumed");
+      d = await r0.json();
+    }catch(e0){ d = {}; }
+    var r = await fetch(API_BASE+"/api/mind/list");
+    var d2 = await r.json();
+    var ts = new Date().toTimeString().slice(0,8);
+    if(d && d.total != null){
+      el.innerHTML = "数据源：思维监控「💡想通瞬间」共 <b>" + (d.total || 0) + "</b> 条【迭代原料】—— 已消化 <b>"
+        + (d.consumed || 0) + "</b> 条 · <b style='color:var(--brand)'>待迭代 " + (d.pending || 0) + " 条</b>；错误思维 "
+        + ((d2.total_error_thoughts) || 0) + " 条【不参与迭代】。3_我的原创默认排除（已蒸馏进内核）。"
+        + (d.updated ? "· 上次采纳 " + esc(d.updated) : "") + " · 统计更新于 " + ts;
+    }else{
+      el.textContent = "数据源：思维监控「💡想通瞬间」已落盘 " + ((d2.total_breakthroughs) || 0)
+        + " 条【迭代原料】，错误思维 " + ((d2.total_error_thoughts) || 0) + " 条【不参与迭代】 · 统计更新于 " + ts;
+    }
+    flash("✓ 已刷新");
+  }catch(e){
+    el.textContent = "素材统计获取失败"; flash("✗ 失败");
+  }
+}
+
+async function resetConsumed(){
+  if(!online){ toast("迭代需要本地服务，请先运行 start_workbench.bat"); return; }
+  if(!confirm("重置「已消化」账本后，全部想通瞬间都会重新参与迭代（含此前已采纳消化过的）。\n\n内核本身不受影响，只是增量账本清空。确定？")) return;
+  try{
+    var r = await fetch(API_BASE+"/api/kernel/mind_consumed", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({action:"reset"})
+    });
+    var d = await r.json();
+    if(!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+    toast("已重置：全部想通瞬间重新可迭代");
+    loadMindStat(null);
+  }catch(e){
+    toast("重置失败：" + (e.message || e));
+  }
+}
+
+function renderPrompt(){
+  var f = readFields();
+  var cps = f.corePoints.map(stripIdx).filter(Boolean)
+             .map(function(p,i){ return (i+1) + ". " + p; }).join("\n");
+  var sp =
+"你是我的内容创作合伙人。请严格基于以下「我的认知内核」来理解我的世界观、价值观与表达风格，\n" +
+"并在生成选题、文章框架、初稿、纠错时与之保持一致：\n\n" +
+"【世界观】" + (f.worldview || "（待补充）") + "\n\n" +
+"【人生观】" + (f.lifeview  || "（待补充）") + "\n\n" +
+"【价值观】" + (f.values    || "（待补充）") + "\n\n" +
+"【认知方式】" + (f.cognition || "（待补充）") + "\n\n" +
+"【我的核心观点】\n" + (cps || "（待补充）") + "\n\n" +
+"【高频主题】" + (f.keywords.join("、") || "（待补充）") + "\n\n" +
+"—— 要求：所有产出须与以上内核自洽；若出现与我的价值观或认知方式冲突的表述，请主动指出并给出更符合的替代。";
+  $("spView").textContent = sp;
+}
+
+function copyPrompt(){
+  renderPrompt();
+  var t = $("spView").textContent;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){ toast("System Prompt 已复制"); })
+      .catch(function(){ toast("复制失败，请手动选中复制"); });
+  }else{
+    var ta = document.createElement("textarea");
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("System Prompt 已复制"); }
+    catch(e){ toast("请手动选中复制"); }
+    document.body.removeChild(ta);
+  }
+}
+
+(function init(){
+  $("dsKey").value   = localStorage.getItem(KKEY)   || "";
+  var _dm = localStorage.getItem(KMODEL) || "";
+  if(!_dm || _dm === "deepseek-chat") _dm = "deepseek-v4-flash";   // 停用模型自动纠正
+  $("dsModel").value = _dm;
+  $("dsKey").addEventListener("change", function(e){ localStorage.setItem(KKEY, e.target.value.trim()); });
+  $("dsModel").addEventListener("change", function(e){ localStorage.setItem(KMODEL, e.target.value.trim()); });
+  ["worldview","lifeview","values","cognition","corePoints","keywords"].forEach(function(id){
+    $(id).addEventListener("input", renderPrompt);
+  });
+  renderPrompt();
+  checkServer().then(function(ok){
+    if(ok){ loadKernel(); loadMindStat(); }
+    else loadLocal();
+  });
+})();
+</script>
+</body>
+</html>
