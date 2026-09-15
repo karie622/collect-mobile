@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>干货阅读器</title>
+<style>
+:root{--bg:#f6f6f4;--panel:#fff;--line:#e3e2de;--sub:#8a8880;--txt:#22211e;--acc:#2e7d5b}
+*{box-sizing:border-box}
+body{margin:0;padding:14px 14px 40px;background:var(--bg);color:var(--txt);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:19px;margin:6px 0 2px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.top a{font-size:13px;color:var(--acc);text-decoration:none}
+.sub{font-size:12.5px;color:var(--sub);margin:2px 0 14px}
+.search{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;
+  background:var(--panel);font-size:15px;outline:none}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:11px 0 4px}
+.chip{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);
+  font-size:12.5px;cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:6px 14px;margin-top:12px}
+.it{padding:11px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+.it:last-child{border-bottom:none}
+.t{font-weight:600;line-height:1.45;font-size:15px}
+.m{font-size:11.5px;color:var(--sub);margin-top:3px}
+.x{font-size:13.5px;line-height:1.85;margin-top:8px;display:none;
+  white-space:pre-wrap;background:var(--bg);border-radius:9px;padding:11px 12px}
+.x a{color:var(--acc);word-break:break-all}
+.gray{color:var(--sub)}
+.sec{margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sec.orig{border-color:var(--acc)}
+.sec-h{font-size:12.5px;font-weight:700;padding:7px 12px;background:var(--panel);
+  border-bottom:1px solid var(--line);color:var(--acc)}
+.sec.orig .sec-h{background:#eaf5ef;color:#1f7a4d}
+.sec-b{padding:10px 12px;font-size:13.5px;line-height:1.85;white-space:pre-wrap}
+.note{margin-top:10px;padding:9px 11px;border-radius:8px;background:var(--bg);
+  color:var(--sub);font-size:12.5px;line-height:1.7}
+.ochip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:20px;
+  background:#eaf5ef;color:#1f7a4d;font-size:11px;font-weight:600}
+.mini{display:inline-block;margin-top:7px;padding:5px 11px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel);font-size:12px;cursor:pointer;color:var(--txt)}
+.mini.acc{background:var(--acc);color:#fff;border-color:var(--acc)}
+.ops{margin-top:6px}
+.rcbox{display:none;margin-top:8px;padding:10px 11px;background:var(--bg);border-radius:9px;font-size:12.5px}
+.rc-head{line-height:1.6;margin-bottom:6px}
+.scs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.sc{padding:3px 8px;border-radius:7px;background:var(--panel);border:1px solid var(--line);color:var(--sub);font-size:11.5px}
+.sc.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>📖 干货阅读器</h1>
+    <a href="./干货.html">← 去采集</a>
+    <a href="./index.html">← 返回首页</a>
+  </div>
+  <div class="sub" id="stat">加载中…</div>
+
+  <input class="search" id="q" placeholder="搜索标题或摘要…" oninput="render()">
+  <div class="chips" id="chips"></div>
+
+  <div class="card" id="list"><div class="m gray">加载中…</div></div>
+</div>
+
+<script>
+// ===== API 地址自动识别（与 index.html 一致）=====
+const DEFAULT_API='https://1488221122-fm448vw4ra.ap-beijing.tencentscf.com';
+const API_BASE=(function(){
+  const norm=u=>(u||'').trim().replace(/\/+$/,'');
+  try{
+    const q=norm(new URLSearchParams(location.search).get('api'));
+    if(q){localStorage.setItem('cdb_api_base',q);return q;}
+  }catch(e){}
+  try{
+    const s=norm(localStorage.getItem('cdb_api_base'));
+    if(s)return s;
+  }catch(e){}
+  const h=(location.hostname||'').toLowerCase();
+  return h.endsWith('tencentscf.com')?'':DEFAULT_API;
+})();
+
+var ALL=[], CAT='', box=document.getElementById('list');
+function esc(s){return (s||'').replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function linkify(s){
+  return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank">$1</a>');
+}
+function match(it){
+  var k=document.getElementById('q').value.trim().toLowerCase();
+  if(CAT && it.category!==CAT) return false;
+  if(!k) return true;
+  return (it.title||'').toLowerCase().indexOf(k)>=0
+      || (it.excerpt||'').toLowerCase().indexOf(k)>=0;
+}
+function render(){
+  var items=ALL.filter(match);
+  if(!items.length){box.innerHTML='<div class="m gray">没有匹配的素材。</div>';return;}
+  box.innerHTML=items.map(function(it){
+    return '<div class="it" data-id="'+esc(it.id)+'" data-t="'+esc(it.title||'')+'" onclick="toggle(this,\''+esc(it.id)+'\')">'
+      +'<div class="t">'+esc(it.title||'(无标题)')+'</div>'
+      +'<div class="m">'+esc(it.category||'')
+      +' · '+esc((it.collected_at||'').slice(0,16))
+      +(it.ai_classified==='yes'?' · AI 分类':'')
+      +(it.has_original?'<span class="ochip">📜 原文</span>':'')
+      +(it.source?' · <a href="'+esc(it.source)+'" target="_blank" onclick="event.stopPropagation()">原文链接</a>':'')+'</div>'
+      +'<div class="ops"><button class="mini" onclick="event.stopPropagation();openCatPickR(this.parentNode.parentNode)">📂 改分类</button>'
+      +'<button class="mini" style="color:#b23b2e" onclick="event.stopPropagation();delItemR(this.parentNode.parentNode)">🗑 删</button></div>'
+      +'<div class="x"></div>'
+      +'<div class="rcbox"></div></div>';
+  }).join('');
+}
+function renderCats(){
+  var cnt={}; ALL.forEach(function(it){cnt[it.category||'未分类']=(cnt[it.category||'未分类']||0)+1;});
+  var keys=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];});
+  var html='<div class="chip'+(CAT===''?' on':'')+'" onclick="pick(\'\')">全部 '+ALL.length+'</div>';
+  keys.forEach(function(k){
+    html+='<div class="chip'+(CAT===k?' on':'')+'" onclick="pick(\''+esc(k)+'\')">'+esc(k)+' '+cnt[k]+'</div>';
+  });
+  document.getElementById('chips').innerHTML=html;
+}
+function pick(c){CAT=c;renderCats();render();}
+async function toggle(el,id){
+  var x=el.querySelector('.x'); if(!x) return;
+  if(x.style.display==='block'){x.style.display='none';return;}
+  x.textContent='读取中…';x.style.display='block';
+  try{
+    var r=await fetch(API_BASE+'/api/ganhuo/item?id='+encodeURIComponent(id));
+    var j=await r.json();
+    x.innerHTML=renderContent(j.content||'（无正文）');
+  }catch(e){x.textContent='读取失败：'+e.message;}
+}
+// 把素材正文按 ## 标题切成清晰区块，原文置顶、独立成段，一眼可辨
+function renderContent(raw){
+  var lines=(raw||'').split('\n');
+  var secs=[],cur=null;
+  for(var i=0;i<lines.length;i++){
+    var m=lines[i].match(/^##\s+(.*)$/);
+    if(m){cur={h:m[1].trim(),body:[]};secs.push(cur);}
+    else if(cur){cur.body.push(lines[i]);}
+  }
+  if(!secs.length){
+    return '<div class="sec"><div class="sec-b">'+linkify(raw||'（无正文）')+'</div></div>';
+  }
+  var order={'原文':0,'核心观点':1,'内容摘录':2,'我的批注':3};
+  secs.sort(function(a,b){
+    var ia=(order[a.h]!==undefined?order[a.h]:99);
+    var ib=(order[b.h]!==undefined?order[b.h]:99);
+    return ia-ib;
+  });
+  var html='';
+  var hasOrig=false;
+  for(var k=0;k<secs.length;k++){if(secs[k].h==='原文'){hasOrig=true;break;}}
+  if(!hasOrig) html+='<div class="note">（此条目采集于升级前，暂无独立「原文」段；下方为 AI 精修内容）</div>';
+  for(var s=0;s<secs.length;s++){
+    var sec=secs[s];
+    var cls=(sec.h==='原文')?'sec orig':'sec';
+    html+='<div class="'+cls+'"><div class="sec-h">'+esc(sec.h)+'</div>'
+        +'<div class="sec-b">'+linkify(sec.body.join('\n').trim())+'</div></div>';
+  }
+  return html;
+}
+var CATS=[];
+async function openCatPickR(el){
+  var id=el.getAttribute('data-id');
+  var box=el.querySelector('.rcbox');
+  if(box.style.display==='block'){box.style.display='none';return;}
+  box.innerHTML='加载分类…';box.style.display='block';
+  try{
+    if(!CATS.length){
+      var r0=await fetch(API_BASE+'/api/ganhuo/ping');
+      var j0=await r0.json();
+      CATS=(j0&&j0.categories)||[];
+    }
+    var cur=ALL.filter(function(x){return x.id===id;})[0];
+    cur=(cur&&cur.category)||'';
+    box.innerHTML='<div class="rc-head">选择新分类：</div><div class="scs">'
+      +CATS.map(function(c){
+        return '<span class="sc'+(c===cur?' on':'')+'" style="cursor:pointer" onclick="pickCatR(this,\''+esc(c)+'\')">'+esc(c)+'</span>';
+      }).join('')+'</div>';
+  }catch(e){box.innerHTML='<span style="color:#b23b2e">分类加载失败：'+esc(e.message)+'</span>';}
+}
+async function pickCatR(sp,cat){
+  var el=sp.closest('.it');
+  if(!confirm('把这条移到「'+cat+'」？')) return;
+  var id=el.getAttribute('data-id');
+  var box=el.querySelector('.rcbox');
+  try{
+    var r=await fetch(API_BASE+'/api/ganhuo/move',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id,category:cat})});
+    var j=await r.json();
+    if(j.ok){box.innerHTML='✓ 已移动到 '+esc(j.category);load();}
+    else{box.innerHTML='<span style="color:#b23b2e">'+esc(j.error||'移动失败')+'</span>';}
+  }catch(e){box.innerHTML='<span style="color:#b23b2e">移动失败：'+esc(e.message)+'</span>';}
+}
+async function delItemR(el){
+  var t=el.getAttribute('data-t')||'';
+  if(!confirm('确定删除《'+t+'》？删除后不可恢复。')) return;
+  var id=el.getAttribute('data-id');
+  try{
+    var r=await fetch(API_BASE+'/api/ganhuo/delete',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})});
+    var j=await r.json();
+    if(j.ok){load();}
+    else{alert('删除失败');}
+  }catch(e){alert('删除失败：'+e.message);}
+}
+async function load(){
+  try{
+    var r=await fetch(API_BASE+'/api/ganhuo/list'); var j=await r.json();
+    ALL=(j&&j.items)||[];
+    document.getElementById('stat').textContent='共 '+ALL.length+' 条干货，点标题展开原文';
+    renderCats(); render();
+  }catch(e){
+    document.getElementById('stat').textContent='读取失败';
+    box.innerHTML='<div class="m" style="color:#b23b2e">读取失败：'+esc(e.message)+'</div>';
+  }
+}
+load();
+</script>
+</body>
+</html>
