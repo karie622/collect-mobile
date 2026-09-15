@@ -49,6 +49,9 @@ textarea{min-height:150px;resize:vertical;line-height:1.6}
 .recent .m{font-size:11.5px;color:var(--sub);margin-top:2px}
 .recent .x{font-size:12px;color:var(--sub);line-height:1.75;margin-top:6px;display:none;
   white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:8px 10px}
+.airow{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:13px;color:var(--sub)}
+.airow input{width:auto}
+.airow label{margin:0;font-weight:400}
 .nav{display:block;text-align:center;text-decoration:none;color:var(--accent);
   font-size:13.5px;padding:11px;border:1px solid var(--line);border-radius:11px;
   background:var(--panel);margin-top:10px}
@@ -88,6 +91,8 @@ textarea{min-height:150px;resize:vertical;line-height:1.6}
       <option>社会观察</option><option>内在修行</option><option>人际关系</option>
       <option>能力提升</option><option>健康管理</option><option>效率提升</option>
     </select>
+    <div class="airow"><input type="checkbox" id="u-ai">
+      <label for="u-ai" style="margin:0;font-weight:400;display:inline">使用 AI 精修分类（每次约 0.001~0.01 元）</label></div>
     <button class="btn" onclick="submitUrl()">抓取并入库</button>
   </div>
 
@@ -102,6 +107,8 @@ textarea{min-height:150px;resize:vertical;line-height:1.6}
       <option>社会观察</option><option>内在修行</option><option>人际关系</option>
       <option>能力提升</option><option>健康管理</option><option>效率提升</option>
     </select>
+    <div class="airow"><input type="checkbox" id="p-ai">
+      <label for="p-ai" style="margin:0;font-weight:400;display:inline">使用 AI 精修分类（每次约 0.001~0.01 元）</label></div>
     <button class="btn" onclick="submitPaste()">直接入库</button>
   </div>
 
@@ -211,7 +218,7 @@ async function submitUrl(){
   showMsg('wait','正在抓取正文并入库…（微信文章约需 10~40 秒，请勿关闭页面）');
   try{
     var r=await fetchTO(base()+'/api/fetch-url',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({url:url,category_hint:$('u-hint').value}),to:75000});
+      body:JSON.stringify({url:url,category_hint:$('u-hint').value,use_ai:$('u-ai').checked?'yes':'no'}),to:75000});
     var j=await r.json();
     if(!r.ok||!j.ok){
       showMsg('err','✗ '+(j.error||('请求失败 '+r.status))
@@ -233,7 +240,7 @@ async function submitPaste(){
   hideMsg();
   var c=$('p-content').value.trim();
   if(!c){showMsg('err','请先粘贴正文。');return;}
-  await post({title:$('p-title').value.trim(),content:c,category_hint:$('p-hint').value},'已入库');
+  await post({title:$('p-title').value.trim(),content:c,category_hint:$('p-hint').value,use_ai:$('p-ai').checked?'yes':'no'},'已入库');
   $('p-content').value=''; $('p-title').value='';
 }
 async function loadRecent(){
