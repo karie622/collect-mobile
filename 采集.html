@@ -149,7 +149,8 @@ const API_BASE=(function(){
   }catch(e){}
   try{
     const s=norm(localStorage.getItem('cdb_api_base'));
-    if(s)return s;
+    if(s && !/railway\.app/i.test(s))return s;   // 已停用的 Railway 旧地址自动作废
+    try{ if(s && /railway\.app/i.test(s)) localStorage.removeItem('cdb_api_base'); }catch(e){}
   }catch(e){}
   // 本页不是由腾讯云函数域提供时（如 GitHub Pages / 本地直开），默认指向云端后端；
   // 同源部署时留空走相对路径。
