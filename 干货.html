@@ -127,7 +127,8 @@ const API_BASE=(function(){
   }catch(e){}
   try{
     const s=norm(localStorage.getItem('cdb_api_base'));
-    if(s)return s;
+    if(s && !/railway\.app/i.test(s))return s;   // 已停用的 Railway 旧地址自动作废
+    try{ if(s && /railway\.app/i.test(s)) localStorage.removeItem('cdb_api_base'); }catch(e){}
   }catch(e){}
   const h=(location.hostname||'').toLowerCase();
   return h.endsWith('tencentscf.com')?'':DEFAULT_API;
