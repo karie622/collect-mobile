@@ -173,7 +173,7 @@ async function submit(){
     var j=await r.json();
     if(j.error){showMsg('err','✗ '+esc(j.error));}
     else{
-      showMsg('ok','✓ 已入库 <b>'+esc(j.category)+'</b>'+(j.ai_classified==='yes'?'（AI 分类）':'（规则分类）')
+      showMsg('ok','✓ 已入库 <b>'+esc(j.category)+'</b>'+(j.cls_source==='ai'?'（AI 分类）':(j.cls_source==='manual'?'（手动指定）':'（规则分类）'))
         +'<br>标题：'+esc(j.title||'')+' · '+j.chars+' 字');
       if(mode==='url'){$('u-url').value='';}else{$('p-content').value='';$('p-title').value='';}
       loadRecent();
