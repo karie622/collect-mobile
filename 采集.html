@@ -300,7 +300,7 @@ async function post(d,okText){
     var r=await fetchTO(b+'/api/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d),to:30000});
     var j=await r.json();
     if(!r.ok||!j.ok){showMsg('err','✗ '+(j.error||('请求失败 '+r.status)));return;}
-    var tag=j.ai_refined?'（AI 精修）':'（规则粗分）';
+    var tag=j.cls_source==='ai'?'（AI 精修）':(j.cls_source==='manual'?'（手动指定）':'（规则粗分）');
     showMsg('ok','✓ '+okText+'：<b>'+esc(j.category)+'</b> '+tag
       +'<br>标题：'+esc(j.title||'')+'<br>已存入：<code>'+esc(j.path)+'</code>');
     loadRecent();
