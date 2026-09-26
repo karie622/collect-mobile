@@ -32,6 +32,7 @@
     padding:14px 20px;
   }
   .head-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:880px;margin:0 auto}
+.tw,.item{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.5px}
   .date{color:var(--muted);font-size:13px}
   .spacer{flex:1}
@@ -127,7 +128,7 @@
   <div class="section-title">📌 单次待办 <small>指定某天，到期当天显示</small></div>
   <div id="todos"></div>
 
-  <div class="hint">数据保存在本机浏览器（localStorage）。换电脑或清缓存会丢失，重要清单建议截图备份 📸</div>
+  <div class="hint">数据保存在本机浏览器（localStorage）。换电脑或清缓存会丢失，重要清单建议截图备份 📸<br>✏️ 长按任意清单标题 / 待办 / 分项即可编辑（0.5 秒），移动或松手取消</div>
   <div class="toast" id="toast"></div>
 </main>
 
@@ -434,6 +435,9 @@
   function showModal(id){ document.getElementById(id).classList.add("open"); }
   function hideModal(id){
     document.getElementById(id).classList.remove("open");
+    editCtx = null;
+    document.querySelector("#modal-routine .btn.primary").textContent = "创建";
+    document.querySelector("#modal-todo .btn.primary").textContent = "创建";
     if(id==="modal-routine"){ document.getElementById("rform").reset(); document.getElementById("r-time-field").style.display="none"; }
     if(id==="modal-todo"){ document.getElementById("tform").reset(); document.getElementById("t-time-field").style.display="none"; document.getElementById("t-date").value = todayStr(); }
   }
@@ -467,8 +471,14 @@
     var title = document.getElementById("r-title").value.trim(); if(!title) return;
     var ptype = document.getElementById("r-period").value;
     var period = ptype==="time" ? { type:"time", value: document.getElementById("r-time").value || "08:00" } : { type:ptype };
-    state.checklists.push({ id:uid(), title:title, period:period, items:[], doneDates:{} });
-    save(); hideModal("modal-routine"); render();
+    if(editCtx && editCtx.type==="routine"){
+      var cl = findChecklist(editCtx.id); if(!cl){ hideModal("modal-routine"); return; }
+      cl.title = title; cl.period = period;
+      save(); hideModal("modal-routine"); render();
+    } else {
+      state.checklists.push({ id:uid(), title:title, period:period, items:[], doneDates:{} });
+      save(); hideModal("modal-routine"); render();
+    }
   });
   document.getElementById("tform").addEventListener("submit", function(e){
     e.preventDefault();
@@ -476,8 +486,95 @@
     var date = document.getElementById("t-date").value || todayStr();
     var ptype = document.getElementById("t-period").value;
     var period = ptype==="time" ? { type:"time", value: document.getElementById("t-time").value || "08:00" } : { type:ptype };
-    state.todos.push({ id:uid(), title:title, date:date, period:period, done:false });
-    save(); hideModal("modal-todo"); render();
+    if(editCtx && editCtx.type==="todo"){
+      var td = findTodo(editCtx.id); if(!td){ hideModal("modal-todo"); return; }
+      td.title = title; td.date = date; td.period = period;
+      save(); hideModal("modal-todo"); render();
+    } else {
+      state.todos.push({ id:uid(), title:title, date:date, period:period, done:false });
+      save(); hideModal("modal-todo"); render();
+    }
+  });
+
+  var editCtx = null; // {type:'routine'|'todo', id} 编辑模式上下文
+
+  function openEditRoutine(cl){
+    editCtx = { type:"routine", id:cl.id };
+    document.getElementById("r-title").value = cl.title;
+    var ptype = (cl.period && cl.period.type) || "allday";
+    document.getElementById("r-period").value = ptype;
+    document.getElementById("r-time-field").style.display = ptype==="time" ? "block" : "none";
+    document.getElementById("r-time").value = (cl.period && cl.period.value) || "08:00";
+    document.querySelector("#modal-routine .btn.primary").textContent = "保存";
+    showModal("modal-routine");
+  }
+  function openEditTodo(td){
+    editCtx = { type:"todo", id:td.id };
+    document.getElementById("t-title").value = td.title;
+    document.getElementById("t-date").value = td.date || todayStr();
+    var ptype = (td.period && td.period.type) || "allday";
+    document.getElementById("t-period").value = ptype;
+    document.getElementById("t-time-field").style.display = ptype==="time" ? "block" : "none";
+    document.getElementById("t-time").value = (td.period && td.period.value) || "08:00";
+    document.querySelector("#modal-todo .btn.primary").textContent = "保存";
+    showModal("modal-todo");
+  }
+  // 长按分项 → 原地变输入框
+  function startItemEdit(cardId, itemId, span){
+    var cl = findChecklist(cardId); if(!cl) return;
+    var it = null;
+    cl.items.forEach(function(x){ if(x.id===itemId) it=x; });
+    if(!it) return;
+    var input = document.createElement("input");
+    input.type = "text"; input.value = it.text;
+    input.style.cssText = "flex:1;min-width:0;border:1px solid #7a5ea8;border-radius:8px;padding:6px 10px;font-size:inherit;background:#fff;outline:none";
+    span.replaceWith(input); input.focus(); input.select();
+    var done = false;
+    function commit(){
+      if(done) return; done = true;
+      var v = input.value.trim();
+      if(v && v !== it.text){ it.text = v; save(); }
+      render();
+    }
+    input.addEventListener("keydown", function(e){
+      if(e.key==="Enter"){ e.preventDefault(); commit(); }
+      else if(e.key==="Escape"){ done = true; render(); }
+    });
+    input.addEventListener("blur", commit);
+  }
+
+  // 长按触发（0.55 秒，移动/抬起即取消，不干扰点击勾选）
+  var pressTimer = null, pressStart = null;
+  function cancelPress(){ if(pressTimer){ clearTimeout(pressTimer); pressTimer = null; } }
+  app.addEventListener("pointerdown", function(e){
+    if(e.button !== undefined && e.button !== 0) return;
+    if(e.target.closest(".cb, .del, .del-item, .del-todo, .toggle, .add-item, input")) return;
+    var tw = e.target.closest(".tw, .item");
+    if(!tw) return;
+    var card = tw.closest(".card"); if(!card) return;
+    pressStart = [e.clientX, e.clientY];
+    pressTimer = setTimeout(function(){
+      pressTimer = null;
+      if(tw.classList.contains("item")){
+        var span = tw.querySelector(".it");
+        if(span) startItemEdit(card.dataset.id, tw.dataset.iid, span);
+      } else if(card.dataset.id){
+        var cl = findChecklist(card.dataset.id); if(cl) openEditRoutine(cl);
+      } else if(card.dataset.tid){
+        var td = findTodo(card.dataset.tid); if(td) openEditTodo(td);
+      }
+    }, 550);
+  });
+  ["pointerup","pointercancel","pointerleave"].forEach(function(ev){
+    app.addEventListener(ev, cancelPress);
+  });
+  app.addEventListener("pointermove", function(e){
+    if(!pressTimer || !pressStart) return;
+    var dx = e.clientX - pressStart[0], dy = e.clientY - pressStart[1];
+    if(dx*dx + dy*dy > 144) cancelPress();   // 移动超过 12px 视为滚动
+  });
+  app.addEventListener("contextmenu", function(e){
+    if(e.target.closest(".tw, .item")) e.preventDefault();  // 防长按弹系统菜单
   });
 
   // 数据导入导出 / 转发微信
