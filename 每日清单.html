@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日清单工作台</title>
+<style>
+  :root{
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --primary:#6366f1;
+    --primary-soft:#eef0ff;
+    --done:#22c55e;
+    --done-soft:#ecfdf3;
+    --border:#e6e8ef;
+    --danger:#ef4444;
+    --warn:#f59e0b;
+    --shadow:0 1px 3px rgba(17,24,39,.06),0 8px 24px rgba(17,24,39,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.5;padding:0 0 60px;
+  }
+  header{
+    position:sticky;top:0;z-index:20;background:rgba(244,246,251,.85);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--border);
+    padding:14px 20px;
+  }
+  .head-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:880px;margin:0 auto}
+  h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.5px}
+  .date{color:var(--muted);font-size:13px}
+  .spacer{flex:1}
+  .btn{
+    border:1px solid var(--border);background:#fff;color:var(--text);
+    padding:8px 14px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;
+    transition:.15s;
+  }
+  .btn:hover{border-color:var(--primary);color:var(--primary)}
+  .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .btn.primary:hover{filter:brightness(1.05);color:#fff}
+  .progress-wrap{max-width:880px;margin:10px auto 0;display:flex;align-items:center;gap:10px}
+  .bar{flex:1;height:8px;background:#e9ebf2;border-radius:99px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#6366f1,#22c55e);width:0;transition:width .3s}
+  .progress-txt{font-size:12px;color:var(--muted);white-space:nowrap}
+  main{max-width:880px;margin:0 auto;padding:0 20px}
+  .section-title{font-size:14px;font-weight:700;color:var(--muted);margin:22px 0 8px;display:flex;align-items:center;gap:8px}
+  .section-title small{font-weight:500;color:#9aa1b1}
+  .group{font-size:12px;font-weight:700;color:var(--primary);margin:16px 0 6px;letter-spacing:.5px}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .card.main-done{border-color:var(--done);background:var(--done-soft)}
+  .card.overdue{border-color:var(--warn)}
+  .card-head{display:flex;align-items:center;gap:12px}
+  .tw{flex:1;min-width:0}
+  .title{font-weight:700;font-size:15px;word-break:break-word}
+  .card.main-done .title{color:#15803d}
+  .meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .toggle{border:none;background:var(--primary-soft);color:var(--primary);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:600}
+  .del,.del-item,.del-todo{
+    border:none;background:transparent;color:#c2c7d2;font-size:20px;line-height:1;
+    cursor:pointer;width:28px;height:28px;border-radius:8px;
+  }
+  .del:hover,.del-item:hover,.del-todo:hover{background:#fde8e8;color:var(--danger)}
+  /* checkbox */
+  .cb{position:relative;display:inline-flex;cursor:pointer;flex:0 0 auto}
+  .cb input{position:absolute;opacity:0;width:0;height:0}
+  .box{width:22px;height:22px;border:2px solid #c7ccd8;border-radius:7px;display:inline-block;transition:.15s;position:relative}
+  .cb input:checked+.box{background:var(--done);border-color:var(--done)}
+  .cb input:checked+.box::after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+  .items{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:8px}
+  .item{display:flex;align-items:center;gap:10px}
+  .item .it{flex:1;font-size:14px;word-break:break-word}
+  .item.done .it{text-decoration:line-through;color:#aab0bd}
+  .add-item{border:1px dashed var(--border);background:#fafbff;border-radius:9px;padding:8px 10px;font-size:13px;outline:none;margin-top:2px}
+  .add-item:focus{border-color:var(--primary);background:#fff}
+  .empty{color:var(--muted);font-size:13px;background:#fff;border:1px dashed var(--border);border-radius:12px;padding:16px;text-align:center}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(17,24,39,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal.open{display:flex}
+  .modal-box{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .modal-box h3{margin:0 0 14px;font-size:16px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;outline:none;background:#fff;color:var(--text)}
+  .field input:focus,.field select:focus{border-color:var(--primary)}
+  .field-row{display:flex;gap:10px}
+  .field-row .field{flex:1}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+  .hint{font-size:12px;color:#9aa1b1;text-align:center;margin-top:18px}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#1f2937;color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:90%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-row">
+    <h1>📋 每日清单工作台</h1>
+<div style="margin-top:8px"><a href="./index.html" style="font-size:13px;color:#2563eb;text-decoration:none;font-weight:600">← 返回云端工作台首页</a></div>
+    <span class="date" id="date-label"></span>
+    <span class="spacer"></span>
+    <button class="btn primary" data-action="new-routine">+ 新建清单</button>
+    <button class="btn" data-action="new-todo">+ 新建待办</button>
+    <button class="btn" data-action="export">⬇ 导出</button>
+    <button class="btn" data-action="import">⬆ 导入</button>
+    <button class="btn" data-action="share-weixin">💬 转发微信</button>
+    <button class="btn" data-action="clear">🗑 清空</button>
+    <input type="file" id="import-file" accept="application/json,.json" hidden>
+  </div>
+  <div class="progress-wrap">
+    <div class="bar"><i id="bar"></i></div>
+    <span class="progress-txt" id="progress-txt">今日进度 0/0</span>
+  </div>
+</header>
+
+<main>
+  <div class="section-title">🌅 每日例行 <small>每天自动重置，勾了第二天还会再出现</small></div>
+  <div id="routine"></div>
+
+  <div class="section-title">📌 单次待办 <small>指定某天，到期当天显示</small></div>
+  <div id="todos"></div>
+
+  <div class="hint">数据保存在本机浏览器（localStorage）。换电脑或清缓存会丢失，重要清单建议截图备份 📸</div>
+  <div class="toast" id="toast"></div>
+</main>
+
+<!-- 新建清单 -->
+<div class="modal" id="modal-routine">
+  <div class="modal-box">
+    <h3>新建每日清单</h3>
+    <form id="rform">
+      <div class="field">
+        <label>清单名称</label>
+        <input id="r-title" placeholder="如：新媒体文章发布" autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>时段</label>
+          <select id="r-period">
+            <option value="allday" selected>全天</option>
+            <option value="morning">上午</option>
+            <option value="afternoon">下午</option>
+            <option value="evening">晚上</option>
+            <option value="time">具体时间</option>
+          </select>
+        </div>
+        <div class="field" id="r-time-field" style="display:none">
+          <label>开始时间</label>
+          <input type="time" id="r-time" value="08:00">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="modal-routine">取消</button>
+        <button type="submit" class="btn primary">创建</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 新建待办 -->
+<div class="modal" id="modal-todo">
+  <div class="modal-box">
+    <h3>新建单次待办</h3>
+    <form id="tform">
+      <div class="field">
+        <label>待办内容</label>
+        <input id="t-title" placeholder="如：明天去朋友家" autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>日期</label>
+          <input type="date" id="t-date">
+        </div>
+        <div class="field">
+          <label>时段</label>
+          <select id="t-period">
+            <option value="allday" selected>全天</option>
+            <option value="morning">上午</option>
+            <option value="afternoon">下午</option>
+            <option value="evening">晚上</option>
+            <option value="time">具体时间</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" id="t-time-field" style="display:none">
+        <label>开始时间</label>
+        <input type="time" id="t-time" value="08:00">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="modal-todo">取消</button>
+        <button type="submit" class="btn primary">创建</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "daily-checklist-workbench-v1";
+  var state = { checklists: [], todos: [] };
+  var expanded = {};
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function pad(n){ return n<10 ? "0"+n : ""+n; }
+  function fmt(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function todayStr(){ return fmt(new Date()); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  }); }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw){ state = JSON.parse(raw); if(!state.checklists) state.checklists=[]; if(!state.todos) state.todos=[]; }
+    }catch(e){ state = { checklists:[], todos:[] }; }
+    // 一次性清理：移除早期版本预置的示例数据（仅当数据完全是那条示例、且分项未被改动时才清）
+    var SEED_ITEMS=["选题定方向","写初稿","配图排版","发布+数据复盘"];
+    if(state.checklists.length===1 && state.todos.length===0
+       && state.checklists[0].title==="新媒体文章发布"
+       && state.checklists[0].items.length===SEED_ITEMS.length
+       && state.checklists[0].items.every(function(it,i){ return it.text===SEED_ITEMS[i]; })){
+      state={ checklists:[], todos:[] };
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    }
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+  function periodWeight(p){
+    if(!p) return 99;
+    switch(p.type){
+      case "morning": return 1;
+      case "time": { var h=8,m=0; var parts=String(p.value||"08:00").split(":"); h=+parts[0]||8; m=+parts[1]||0; return h + m/60; }
+      case "afternoon": return 13;
+      case "evening": return 19;
+      case "allday": return 24;
+      default: return 99;
+    }
+  }
+  function periodTag(p){
+    if(!p) return "📋 全天";
+    switch(p.type){
+      case "morning": return "🌤 上午";
+      case "afternoon": return "☀️ 下午";
+      case "evening": return "🌙 晚上";
+      case "allday": return "📋 全天";
+      case "time": return "🕐 " + (p.value||"08:00");
+      default: return "📋 全天";
+    }
+  }
+  function calcStreak(cl){
+    var n=0, d=new Date();
+    while(true){
+      var k = fmt(d);
+      if(cl.doneDates && cl.doneDates[k]){ n++; d.setDate(d.getDate()-1); }
+      else break;
+    }
+    return n;
+  }
+  function dateLabel(date){
+    var t = todayStr();
+    if(date === t) return "今天 " + t.slice(5);
+    var tm = new Date(); tm.setDate(tm.getDate()+1);
+    if(date === fmt(tm)) return "明天 " + date.slice(5);
+    var ty = new Date(); ty.setDate(ty.getDate()-1);
+    if(date === fmt(ty)) return "昨天 " + date.slice(5);
+    return date.slice(5);
+  }
+
+  var routineEl = document.getElementById("routine");
+  var todosEl = document.getElementById("todos");
+
+  function itemHtml(it, today){
+    var d = !!(it.doneDates && it.doneDates[today]);
+    return '<div class="item '+(d?"done":"")+'" data-iid="'+it.id+'">'
+      + '<label class="cb"><input type="checkbox" class="chk-item"'+(d?" checked":"")+'><span class="box"></span></label>'
+      + '<span class="it">'+esc(it.text)+'</span>'
+      + '<button class="del-item" title="删除">×</button></div>';
+  }
+  function cardHtml(cl, today){
+    var mdone = !!(cl.doneDates && cl.doneDates[today]);
+    var total = cl.items.length;
+    var done = 0;
+    for(var i=0;i<cl.items.length;i++){ if(cl.items[i].doneDates && cl.items[i].doneDates[today]) done++; }
+    var streak = calcStreak(cl);
+    var open = !!expanded[cl.id];
+    var items = cl.items.map(function(it){ return itemHtml(it, today); }).join("");
+    return '<div class="card '+(mdone?"main-done":"")+'" data-id="'+cl.id+'">'
+      + '<div class="card-head">'
+      + '<label class="cb"><input type="checkbox" class="chk-main"'+(mdone?" checked":"")+'><span class="box"></span></label>'
+      + '<div class="tw"><div class="title">'+esc(cl.title)+'</div>'
+      + '<div class="meta">'+periodTag(cl.period)+' · 进度 '+done+"/"+total+(streak>0?(" · 🔥连续"+streak+"天"):"")+'</div></div>'
+      + '<button class="toggle">'+(open?"收起":"展开")+'</button>'
+      + '<button class="del" title="删除清单">×</button>'
+      + '</div>'
+      + '<div class="items"'+(open?"":" hidden")+'>'+items
+      + '<input class="add-item" placeholder="添加分项，回车保存…"></div></div>';
+  }
+  function todoHtml(t, today){
+    var d = !!t.done;
+    var overdue = t.date < today && !d;
+    return '<div class="card todo '+(d?"main-done":"")+(overdue?" overdue":"")+'" data-tid="'+t.id+'">'
+      + '<div class="card-head">'
+      + '<label class="cb"><input type="checkbox" class="chk-todo"'+(d?" checked":"")+'><span class="box"></span></label>'
+      + '<div class="tw"><div class="title">'+esc(t.title)+'</div>'
+      + '<div class="meta">'+periodTag(t.period)+(overdue?" · ⚠️已过期":"")+'</div></div>'
+      + '<button class="del-todo" title="删除">×</button></div></div>';
+  }
+
+  function updateProgress(today){
+    var total=0, done=0;
+    state.checklists.forEach(function(cl){
+      total++; if(cl.doneDates && cl.doneDates[today]) done++;
+      cl.items.forEach(function(it){ total++; if(it.doneDates && it.doneDates[today]) done++; });
+    });
+    state.todos.forEach(function(t){ if(t.date >= today){ total++; if(t.done) done++; } });
+    var pct = total ? Math.round(done/total*100) : 0;
+    document.getElementById("bar").style.width = pct + "%";
+    document.getElementById("progress-txt").textContent = "今日进度 " + done + "/" + total + "（" + pct + "%）";
+  }
+
+  function render(){
+    var today = todayStr();
+    // 日期
+    var wd = ["周日","周一","周二","周三","周四","周五","周六"][new Date().getDay()];
+    document.getElementById("date-label").textContent = today + " " + wd;
+
+    // 例行
+    var sorted = state.checklists.slice().sort(function(a,b){
+      var w = periodWeight(a.period)-periodWeight(b.period);
+      if(w!==0) return w;
+      return a.title.localeCompare(b.title,"zh");
+    });
+    var rh="", lg=null;
+    sorted.forEach(function(cl){
+      var g = periodTag(cl.period);
+      if(g!==lg){ rh += '<div class="group">'+esc(g)+'</div>'; lg=g; }
+      rh += cardHtml(cl, today);
+    });
+    if(!sorted.length) rh = '<div class="empty">还没有清单，点右上角「新建清单」添加你的每日例行 ✨</div>';
+    routineEl.innerHTML = rh;
+
+    // 待办
+    var ts = state.todos.slice().sort(function(a,b){
+      if(a.date!==b.date) return a.date < b.date ? -1 : 1;
+      return periodWeight(a.period)-periodWeight(b.period);
+    });
+    var th="", tg=null;
+    ts.forEach(function(t){
+      var g = dateLabel(t.date);
+      if(g!==tg){ th += '<div class="group">'+esc(g)+'</div>'; tg=g; }
+      th += todoHtml(t, today);
+    });
+    if(!ts.length) th = '<div class="empty">没有单次待办。点「新建待办」添加，比如「明天去朋友家」🏠</div>';
+    todosEl.innerHTML = th;
+
+    updateProgress(today);
+  }
+
+  // 展开/收起（直接操作 DOM，避免输入丢失）
+  function toggleExpand(id){
+    var card = document.querySelector('.card[data-id="'+id+'"]');
+    if(!card) return;
+    if(expanded[id]) delete expanded[id]; else expanded[id]=true;
+    var items = card.querySelector(".items");
+    var btn = card.querySelector(".toggle");
+    var open = !!expanded[id];
+    items.hidden = !open;
+    btn.textContent = open ? "收起" : "展开";
+  }
+
+  function findChecklist(id){ for(var i=0;i<state.checklists.length;i++) if(state.checklists[i].id===id) return state.checklists[i]; return null; }
+  function findTodo(id){ for(var i=0;i<state.todos.length;i++) if(state.todos[i].id===id) return state.todos[i]; return null; }
+
+  function delChecklist(id){
+    if(!confirm("删除该清单及其所有分项？")) return;
+    state.checklists = state.checklists.filter(function(c){ return c.id!==id; });
+    save(); render();
+  }
+  function delItem(cid, iid){
+    var cl = findChecklist(cid); if(!cl) return;
+    cl.items = cl.items.filter(function(it){ return it.id!==iid; });
+    save(); render();
+  }
+  function delTodo(id){
+    if(!confirm("删除该待办？")) return;
+    state.todos = state.todos.filter(function(t){ return t.id!==id; });
+    save(); render();
+  }
+
+  // 事件委托
+  var app = document.querySelector("main");
+  app.addEventListener("change", function(e){
+    var chk = e.target;
+    var today = todayStr();
+    if(chk.classList.contains("chk-main")){
+      var cl = findChecklist(chk.closest(".card").dataset.id); if(!cl) return;
+      cl.doneDates[today] = chk.checked; save(); render();
+    } else if(chk.classList.contains("chk-item")){
+      var card = chk.closest(".card");
+      var cl2 = findChecklist(card.dataset.id); if(!cl2) return;
+      var it = null;
+      cl2.items.forEach(function(x){ if(x.id===chk.closest(".item").dataset.iid) it=x; });
+      if(it){ it.doneDates[today] = chk.checked; save(); render(); }
+    } else if(chk.classList.contains("chk-todo")){
+      var t = findTodo(chk.closest(".card").dataset.tid); if(!t) return;
+      t.done = chk.checked; save(); render();
+    }
+  });
+  app.addEventListener("click", function(e){
+    var t = e.target;
+    if(t.classList.contains("toggle")){ toggleExpand(t.closest(".card").dataset.id); }
+    else if(t.classList.contains("del")){ delChecklist(t.closest(".card").dataset.id); }
+    else if(t.classList.contains("del-item")){ var c=t.closest(".card"); delItem(c.dataset.id, t.closest(".item").dataset.iid); }
+    else if(t.classList.contains("del-todo")){ delTodo(t.closest(".card").dataset.tid); }
+  });
+  app.addEventListener("keydown", function(e){
+    if(e.target.classList.contains("add-item") && e.key==="Enter"){
+      var text = e.target.value.trim(); if(!text) return;
+      var cl = findChecklist(e.target.closest(".card").dataset.id); if(!cl) return;
+      cl.items.push({ id:uid(), text:text, doneDates:{} });
+      save(); render();
+    }
+  });
+
+  // modal
+  function showModal(id){ document.getElementById(id).classList.add("open"); }
+  function hideModal(id){
+    document.getElementById(id).classList.remove("open");
+    if(id==="modal-routine"){ document.getElementById("rform").reset(); document.getElementById("r-time-field").style.display="none"; }
+    if(id==="modal-todo"){ document.getElementById("tform").reset(); document.getElementById("t-time-field").style.display="none"; document.getElementById("t-date").value = todayStr(); }
+  }
+  document.querySelectorAll("[data-action]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var a=b.dataset.action;
+      if(a==="new-routine") showModal("modal-routine");
+      else if(a==="new-todo") showModal("modal-todo");
+      else if(a==="export") exportData();
+      else if(a==="import") document.getElementById("import-file").click();
+      else if(a==="share-weixin") shareToWeixin();
+      else if(a==="clear") clearAll();
+    });
+  });
+  document.querySelectorAll("[data-close]").forEach(function(b){
+    b.addEventListener("click", function(){ hideModal(b.dataset.close); });
+  });
+  document.querySelectorAll(".modal").forEach(function(m){
+    m.addEventListener("click", function(e){ if(e.target===m) hideModal(m.id); });
+  });
+
+  document.getElementById("r-period").addEventListener("change", function(){
+    document.getElementById("r-time-field").style.display = this.value==="time" ? "block" : "none";
+  });
+  document.getElementById("t-period").addEventListener("change", function(){
+    document.getElementById("t-time-field").style.display = this.value==="time" ? "block" : "none";
+  });
+
+  document.getElementById("rform").addEventListener("submit", function(e){
+    e.preventDefault();
+    var title = document.getElementById("r-title").value.trim(); if(!title) return;
+    var ptype = document.getElementById("r-period").value;
+    var period = ptype==="time" ? { type:"time", value: document.getElementById("r-time").value || "08:00" } : { type:ptype };
+    state.checklists.push({ id:uid(), title:title, period:period, items:[], doneDates:{} });
+    save(); hideModal("modal-routine"); render();
+  });
+  document.getElementById("tform").addEventListener("submit", function(e){
+    e.preventDefault();
+    var title = document.getElementById("t-title").value.trim(); if(!title) return;
+    var date = document.getElementById("t-date").value || todayStr();
+    var ptype = document.getElementById("t-period").value;
+    var period = ptype==="time" ? { type:"time", value: document.getElementById("t-time").value || "08:00" } : { type:ptype };
+    state.todos.push({ id:uid(), title:title, date:date, period:period, done:false });
+    save(); hideModal("modal-todo"); render();
+  });
+
+  // 数据导入导出 / 转发微信
+  function toast(msg){
+    var el=document.getElementById("toast");
+    el.textContent=msg; el.classList.add("show");
+    clearTimeout(el._t); el._t=setTimeout(function(){ el.classList.remove("show"); }, 2800);
+  }
+  function download(filename, text){
+    var blob=new Blob([text], {type:"application/json;charset=utf-8"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+  function buildExportObj(){ return { app:"daily-checklist-workbench", version:1, exportedAt:new Date().toISOString(), data:state }; }
+  function fallbackCopy(txt){
+    var ta=document.createElement("textarea");
+    ta.value=txt; ta.style.position="fixed"; ta.style.top="0"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta);
+  }
+  function copyText(txt){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(txt).catch(function(){ fallbackCopy(txt); });
+    }
+    fallbackCopy(txt); return Promise.resolve();
+  }
+  function buildWeixinText(){
+    var today=todayStr(); var lines=["📋 我的每日清单（"+today+"）",""];
+    state.checklists.forEach(function(cl){
+      lines.push((cl.doneDates[today]?"✅":"⬜")+" 【"+cl.title+"】 "+periodTag(cl.period));
+      cl.items.forEach(function(it){ lines.push("   "+(it.doneDates[today]?"✅":"⬜")+" "+it.text); });
+    });
+    if(state.todos.length){
+      lines.push("","📌 单次待办");
+      state.todos.forEach(function(t){ lines.push((t.done?"✅":"⬜")+" "+t.title+"（"+dateLabel(t.date)+" "+periodTag(t.period)+"）"); });
+    }
+    return lines.join("\n");
+  }
+  function exportData(){
+    var obj=buildExportObj();
+    var name="每日清单工作台-备份-"+todayStr().replace(/-/g,"")+".json";
+    download(name, JSON.stringify(obj,null,2));
+    toast("已导出备份：" + name);
+  }
+  function shareToWeixin(){
+    var obj=buildExportObj();
+    var name="每日清单工作台-"+todayStr().replace(/-/g,"")+".json";
+    download(name, JSON.stringify(obj,null,2));
+    copyText(buildWeixinText()).then(function(){
+      toast("文件已下载 + 文字已复制 ✅ 把文件拖进微信「文件传输助手」，或粘贴文字直接发");
+    });
+  }
+  function importData(file){
+    var reader=new FileReader();
+    reader.onload=function(){
+      try{
+        var obj=JSON.parse(reader.result);
+        var inc=obj&&obj.data?obj.data:(obj&&obj.checklists?obj:null);
+        if(!inc||!inc.checklists){ toast("文件格式不对，导入失败"); return; }
+        var replace=confirm("导入方式：\n[确定] = 覆盖当前所有数据\n[取消] = 仅追加文件中新增的项目");
+        if(replace){ state={ checklists:inc.checklists||[], todos:inc.todos||[] }; }
+        else{
+          var cmap={}; state.checklists.forEach(function(c){ cmap[c.id]=1; });
+          (inc.checklists||[]).forEach(function(c){ if(!cmap[c.id]) state.checklists.push(c); });
+          var tmap={}; state.todos.forEach(function(t){ tmap[t.id]=1; });
+          (inc.todos||[]).forEach(function(t){ if(!tmap[t.id]) state.todos.push(t); });
+        }
+        save(); render(); toast(replace?"已覆盖导入":"已追加导入新项目");
+      }catch(e){ toast("解析失败，文件可能损坏"); }
+    };
+    reader.readAsText(file);
+  }
+  document.getElementById("import-file").addEventListener("change", function(){
+    if(this.files&&this.files[0]) importData(this.files[0]); this.value="";
+  });
+  function clearAll(){
+    if(!confirm("清空全部清单和待办？该操作不可恢复，建议先点「导出」备份。")) return;
+    state={ checklists:[], todos:[] }; save(); render(); toast("已清空全部数据");
+  }
+
+  // init
+  document.getElementById("t-date").value = todayStr();
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
